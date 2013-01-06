@@ -24,12 +24,21 @@
     <ClCompile Include="..\console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Root_file_handler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Console.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Root_file_handler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\rootstuff.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Console.h">
+    <ClInclude Include="..\event_data.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
