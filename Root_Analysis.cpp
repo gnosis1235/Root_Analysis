@@ -20,6 +20,9 @@
 #include "Root_file_handler.h"
 #include "console.h"
 
+#include <thread>
+
+
 using namespace std;
 
 
@@ -48,7 +51,11 @@ int main(__int32 argc, char* argv[], char* envp[])
 	event_data * single_event ;
 	for(int idx=0;idx<10;idx++){
 		single_event = input_root->get_next_event();
-		printf("reaction=%f\n",single_event->reaction);
+		printf("\nreaction=%f\n",single_event->reaction);
+		printf("r1x=%f, r1y=%f, r1tof=%f,\n e1x=%f, e1y=%f, e1tof=%f\n", single_event->rx[0], single_event->ry[0], single_event->rtof[0], single_event->ex[0], single_event->ey[0], single_event->etof[0]);
+		printf("p1x=%f, p1y=%f, p1tof=%f,\n", single_event->px[0], single_event->py[0], single_event->ptof[0]]);
+		printf(", r2x=%f, r2y=%f, r2tof=%f,\n e2x=%f, e2y=%f, e2tof=%f\n", single_event->rx[1], single_event->ry[1], single_event->rtof[1], single_event->ex[1], single_event->ey[1], single_event->etof[1]);
+		printf("p2x=%f, p2y=%f, p2tof=%f,\n", single_event->px[1], single_event->py[1], single_event->ptof[1]]);
 	}
 
 	//rootstuff * rt = new rootstuff();
