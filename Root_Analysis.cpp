@@ -25,18 +25,28 @@
 #include <math.h>
 
 
-
+ #include <sstream> //for string_to_double
 
 using namespace std;
 
 
+ double string_to_double( const std::string& s )
+ {
+   std::istringstream i(s);
+   double x;
+   if (!(i >> x))
+     return 0;
+   return x;
+ }
 
 
-void analysis(Root_file_handler * input_root_file){
+void analysis(Root_file_handler * input_root_file, Root_file_handler * output_root_file, int thread_id){
 	
 	event_data * single_event ;
-	
-	for(int idx=0;idx<10;idx++){
+	double NTupleData[5];
+	bool WriteNTuple = false;
+
+	for(int idx=0;idx<4;idx++){
 		single_event = input_root_file->get_next_event();
 		
 		//std::chrono::milliseconds sleepDuration(50);
@@ -48,37 +58,50 @@ void analysis(Root_file_handler * input_root_file){
 		printf("p1x=%f, p1y=%f, p1tof=%f,\n", single_event->px[0], single_event->py[0], single_event->ptof[0]);
 		printf("r2x=%f, r2y=%f, r2tof=%f,\n e2x=%f, e2y=%f, e2tof=%f\n", single_event->rx[1], single_event->ry[1], single_event->rtof[1], single_event->ex[1], single_event->ey[1], single_event->etof[1]);
 		printf("p2x=%f, p2y=%f, p2tof=%f,\n", single_event->px[1], single_event->py[1], single_event->ptof[1]);
-		single_event->reaction = pow((double)idx,1000);
+		
+		//single_event->reaction = pow((double)idx,1000);
+		
+		NTupleData[0]=idx;
+		NTupleData[1]=thread_id;
+
+		WriteNTuple = true;
+		if(WriteNTuple) {
+			output_root_file->NTupleD(0,"Data","test_file","idx:threadID",32000,NTupleData);
+			output_root_file->EventsWrittenCounter();
+		}
+		
 	}	
 
 }
 
-void ProcessRootFile(string inputfilename){
+void ProcessRootFile(string inputfilename, string outputfilename){
 	
 	Root_file_handler * input_root_file = new Root_file_handler(inputfilename, "read");
-	
+	Root_file_handler * output_root_file = new Root_file_handler(outputfilename, "write");
 	//event_data * single_event ;
 
 
 
-	std::thread t1(analysis, input_root_file);
-	std::thread t2(analysis, input_root_file);
-	std::thread t3(analysis, input_root_file);
-	std::thread t4(analysis, input_root_file);
-	std::thread t5(analysis, input_root_file);
-	std::thread t6(analysis, input_root_file);
-	std::thread t7(analysis, input_root_file);
-	std::thread t8(analysis, input_root_file);
-	//analysis(input_root_file);
+	//std::thread t1(analysis, input_root_file, output_root_file, 1.);
+	//std::thread t2(analysis, input_root_file, output_root_file, 2.);
+	//std::thread t3(analysis, input_root_file);
+	//std::thread t4(analysis, input_root_file);
+	//std::thread t5(analysis, input_root_file);
+	//std::thread t6(analysis, input_root_file);
+	//std::thread t7(analysis, input_root_file);
+	//std::thread t8(analysis, input_root_file);
+	analysis( input_root_file, output_root_file, 1.);
 
-	t1.join();
-	t2.join();
-	t3.join();
-	t4.join();
-	t5.join();
-	t6.join();
-	t7.join();
-	t8.join();
+	//t1.join();
+	//t2.join();
+	//t3.join();
+	//t4.join();
+	//t5.join();
+	//t6.join();
+	//t7.join();
+	//t8.join();
+
+	
 	return;
 }
 
@@ -92,7 +115,8 @@ int main(__int32 argc, char* argv[], char* envp[])
 
 
 	string inputfilename = "test.root";
-	ProcessRootFile(inputfilename);
+	string outputfilename = "output_test.root";
+	ProcessRootFile(inputfilename, outputfilename);
 
 	return 0;
 }

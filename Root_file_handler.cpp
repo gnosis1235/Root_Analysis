@@ -9,8 +9,10 @@
 #include "TFile.h"
 #include "TTree.h"
 #include "TNtupleD.h"
+#include "TNtuple.h"
 #include "TSystem.h"
 #include "TApplication.h"
+#include <TDirectory.h>
 //#include "TBrowser.h"
 //#include "TNtuple.h"
 
@@ -44,6 +46,7 @@ Root_file_handler::Root_file_handler(std::string filename, std::string Option_re
 	rootfilename = filename;
 
 	inputfileRootTree = 0;
+	current_entry_inputfile = 0;
 
 	reading = false;
 	writing = false;
@@ -56,20 +59,8 @@ Root_file_handler::Root_file_handler(std::string filename, std::string Option_re
 	TTree * dummy2 = new TTree();
 	TText * dummy3 = new TText();
 	//---------------------------------------------------------
-	
-	//rt =  new rootstuff();
 
-	//inputfileRootTree = rt->OpenRootFileGetTree(filename.c_str(),"Data");
-	//current_entry_inputfile =0;
-	//Total_Events_inputfile = (__int64)(inputfileRootTree->GetEntries());
-
-	//printf("total entries in file:%d\n", Total_Events_inputfile);
-	//if(!inputfileRootTree){
-	//	printf("\n could not find NTuple \"Data\" in this rootfile:\n%s\n",filename.c_str());
-	//	
-	//}
-	//Option_read_write.compare("read") != 0
-	if (1){
+	if (strcmp(Option_read_write.c_str(),"read")==0){
 
 		reading = true;
 		printf("\n\nInput file is: %s\n",rootfilename.c_str());
@@ -89,13 +80,30 @@ Root_file_handler::Root_file_handler(std::string filename, std::string Option_re
 		Total_Events_inputfile = (__int64)(inputfileRootTree->GetEntries());
 	
 	}
+	if (strcmp(Option_read_write.c_str(),"write")==0){
+
+		writing = true;
+		printf("Output file is: %s\n\n",rootfilename.c_str());
+		if(FileExists(rootfilename.c_str())) {
+				printf("File exist: File will be overwritten");
+				return;
+		}
+		
+		tuple_size = 100;
+		tuple_array = new TObject*[tuple_size];
+		for (__int32 i =0;i<tuple_size;++i){
+			tuple_array[i] = 0;
+		}
+		RootFile =  new TFile(filename.c_str(),"RECREATE","");
+		
+	}
 	return;
 }
 
 
 Root_file_handler::~Root_file_handler(void)
 {
-	std::lock_guard<std::mutex> guard(mutex); //lock thread
+	std::lock_guard<std::mutex> guard(mutex); //auto lock thread
 }
 
 
@@ -110,6 +118,58 @@ TTree * Root_file_handler::OpenRootFileGetTree(const char *TreeName)
 	
     TTree * tree = (TTree*)RootFile->Get(TreeName);
 	return tree;
+}
+
+TDirectory* Root_file_handler::getDir(TFile *rootfile, TString dirName)
+{
+	//first find out whether directory exists
+#ifdef _DEBUG
+	assert(rootfile);
+#endif
+
+	if (!rootfile) return 0;
+	rootfile->cd("/");
+	TDirectory * direc = rootfile->GetDirectory(dirName.Data());
+	if (!direc)
+	{
+		//if not create it//
+		TString lhs;
+		TString rhs;
+		TString tmp = dirName;
+		while (1)
+		{
+			//if there is no / then this is the last subdir
+			if (tmp.Index("/") == -1)
+			{
+				lhs = tmp;
+			}
+			else //otherwise split the string to lefthandside and righthandside of "/"
+			{
+				lhs = tmp(0,tmp.Index("/"));
+				rhs = tmp(tmp.Index("/")+1,tmp.Length());
+			}
+
+			//check wether subdir exits//
+			direc = gDirectory->GetDirectory(lhs.Data());
+			if (direc)
+				gDirectory->cd(lhs.Data());//cd into it
+			else
+			{
+				direc = gDirectory->mkdir(lhs.Data()); //create it
+				gDirectory->cd(lhs.Data()); //and cd into it
+			}
+
+			//when there is no "/" anymore break here//
+			if (tmp.Index("/") == -1)
+				break;
+
+			//the new temp is all that is on the right hand side
+			tmp = rhs;
+		}
+	}
+	//return to root Path//
+	rootfile->cd("/");
+	return direc;
 }
 
 event_data * Root_file_handler::get_next_event(){
@@ -198,6 +258,52 @@ event_data * Root_file_handler::get_next_event(){
 	return single_event;
 }
 
+
+TNtuple * Root_file_handler::newNTuple(char *name, char * title, char *varlist, __int32 buffersize)
+{
+   TNtuple * nTuple = new TNtuple(name,title,varlist,buffersize);
+   return nTuple;
+}
+
+
+
+
+void Root_file_handler::NTupleD(__int32 id, const char *name, const char * title, const char *varlist, __int32 buffersize, double *data, const char * dir)
+{
+	std::lock_guard<std::mutex> guard(mutex); //auto lock thread
+
+	MyNTuple = 0;
+	if (id <0 || id >= tuple_size) {
+		printf("\nError: NTuple-Id is smaller than 0 or greater than %i\n",tuple_size-1);
+		return;
+	}
+	//printf("here");
+	MyNTuple = (TNtupleD *) tuple_array[id];
+
+	//--if the histo does not exist create it first--//
+	if (!MyNTuple)
+	{
+		MyNTuple = new TNtupleD(name,title,varlist,buffersize);
+		MyNTuple->SetDirectory(getDir(RootFile,dir)); //put it in the wanted directory
+
+		//--now add it to the list--//
+		tuple_array[id]= (TObject *) MyNTuple;
+		//--write it into root file--//
+	}
+	//--check also if name is the same one--//
+	else if (strcmp(MyNTuple->GetName(),name))
+	{
+		printf("name doesn't match(%d) is: %s and should be:%s \n",id, (MyNTuple->GetName()), name);
+	}
+
+	//--now fill it--//
+	if (MyNTuple) MyNTuple->Fill(data);
+}
+
+void Root_file_handler::EventsWrittenCounter() {
+	std::lock_guard<std::mutex> guard(mutex); //auto lock thread
+	eventswritten++;
+}
 
 /////////////////////////////////////////////////////////////////////////////
 bool Root_file_handler::FileExists(const char * strFilename) {
