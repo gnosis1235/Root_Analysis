@@ -19,6 +19,7 @@
 #include "event_data.h"
 #include "Root_file_handler.h"
 #include "console.h"
+#include "Simple_Hist.h"
 
 #include <thread>
 #include <mutex>
@@ -46,7 +47,7 @@ void analysis(Root_file_handler * input_root_file, Root_file_handler * output_ro
 	double NTupleData[5];
 	bool WriteNTuple = false;
 
-	for(int idx=0;idx<10000;idx++){
+	for(int idx=0;idx<10;idx++){
 		single_event = input_root_file->get_next_event();
 		
 		//std::chrono::milliseconds sleepDuration(50);
@@ -82,8 +83,8 @@ void ProcessRootFile(string inputfilename, string outputfilename){
 
 
 
-	std::thread t1(analysis, input_root_file, output_root_file, 1.);
-	std::thread t2(analysis, input_root_file, output_root_file, 2.);
+	//std::thread t1(analysis, input_root_file, output_root_file, 1.);
+	//std::thread t2(analysis, input_root_file, output_root_file, 2.);
 	//std::thread t3(analysis, input_root_file);
 	//std::thread t4(analysis, input_root_file);
 	//std::thread t5(analysis, input_root_file);
@@ -91,10 +92,10 @@ void ProcessRootFile(string inputfilename, string outputfilename){
 	//std::thread t7(analysis, input_root_file);
 	//std::thread t8(analysis, input_root_file);
 	
-	//analysis( input_root_file, output_root_file, 1.);
+	analysis( input_root_file, output_root_file, 1.);
 
-	t1.join();
-	t2.join();
+	//t1.join();
+	//t2.join();
 	//t3.join();
 	//t4.join();
 	//t5.join();
@@ -102,7 +103,12 @@ void ProcessRootFile(string inputfilename, string outputfilename){
 	//t7.join();
 	//t8.join();
 	
+	H1i * hist1 = new H1i("test1", "test title", 10, 1, 10, "testx");
+	hist1->print();
 	
+	hist1->fill1(5.5);
+	hist1->fill1(2.5);
+	hist1->print();
 
 	input_root_file->close_file();
 	output_root_file->write_TNtupleD();

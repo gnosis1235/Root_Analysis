@@ -143,11 +143,13 @@
     <ClCompile Include="..\console.cpp" />
     <ClCompile Include="..\Root_Analysis.cpp" />
     <ClCompile Include="..\Root_file_handler.cpp" />
+    <ClCompile Include="..\Simple_Hist.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Console.h" />
     <ClInclude Include="..\event_data.h" />
     <ClInclude Include="..\Root_file_handler.h" />
+    <ClInclude Include="..\Simple_Hist.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
