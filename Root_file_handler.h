@@ -52,21 +52,23 @@ class Root_file_handler
 	bool reading;
 	bool writing;
 
-	TNtupleD * MyNTuple;
-	TObject ** tuple_array;
+	TNtupleD * MyTNtuple;
+	bool TNtupleD_started;
 	__int32 tuple_size;
 
 	TDirectory* getDir(TFile *rootfile, TString dirName);
 	TTree * OpenRootFileGetTree(const char *TreeName);
 	bool FileExists(const char * strFilename);
+
 public:
 	Root_file_handler(void);//
 	Root_file_handler(std::string filename, std::string Option_read_write);
 	~Root_file_handler(void);
 
     event_data *	get_next_event();
-	TNtuple * newNTuple(char *name, char * title, char *varlist, __int32 buffersize);
-	void NTupleD(__int32 id, const char *name, const char * title, const char *varlist, __int32 buffersize, double *data, const char *  dir = "");
+	void NTupleD(const char *name, const char * title, const char *varlist, __int32 buffersize, double *data, const char *  dir = "Data");
 	void EventsWrittenCounter();
+	void write_TNtupleD();
+	void close_file();
 };
 

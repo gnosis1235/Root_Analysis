@@ -66,11 +66,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>.\</OutDir>
+    <OutDir>$(SolutionDir)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>.\</OutDir>
+    <OutDir>$(SolutionDir)</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -140,14 +141,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\console.cpp" />
-    <ClCompile Include="..\rootstuff.cpp" />
     <ClCompile Include="..\Root_Analysis.cpp" />
     <ClCompile Include="..\Root_file_handler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Console.h" />
     <ClInclude Include="..\event_data.h" />
-    <ClInclude Include="..\rootstuff.h" />
     <ClInclude Include="..\Root_file_handler.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

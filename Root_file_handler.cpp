@@ -23,6 +23,10 @@
 //#include "rootstuff.h"
 #include "event_data.h"
 
+	#ifdef _DEBUG
+		#include "assert.h"
+	#endif
+
 #include <thread>
 #include <mutex>
 
@@ -47,7 +51,9 @@ Root_file_handler::Root_file_handler(std::string filename, std::string Option_re
 
 	inputfileRootTree = 0;
 	current_entry_inputfile = 0;
-
+	MyTNtuple = 0;
+	RootFile =0;
+	TNtupleD_started=false;
 	reading = false;
 	writing = false;
 
@@ -83,18 +89,17 @@ Root_file_handler::Root_file_handler(std::string filename, std::string Option_re
 	if (strcmp(Option_read_write.c_str(),"write")==0){
 
 		writing = true;
-		printf("Output file is: %s\n\n",rootfilename.c_str());
+		printf("Output file is: %s\n",rootfilename.c_str());
 		if(FileExists(rootfilename.c_str())) {
-				printf("File exist: File will be overwritten");
-				return;
+				printf("Output file exist: File will be overwritten\n");
 		}
 		
-		tuple_size = 100;
-		tuple_array = new TObject*[tuple_size];
-		for (__int32 i =0;i<tuple_size;++i){
-			tuple_array[i] = 0;
-		}
-		RootFile =  new TFile(filename.c_str(),"RECREATE","");
+		//tuple_size = 100;
+		//tuple_array = new TObject*[tuple_size];
+		//for (__int32 i =0;i<tuple_size;++i){
+		//	tuple_array[i] = 0;
+		//}
+		RootFile =  new TFile(filename.c_str(),"RECREATE");
 		
 	}
 	return;
@@ -126,10 +131,10 @@ TDirectory* Root_file_handler::getDir(TFile *rootfile, TString dirName)
 #ifdef _DEBUG
 	assert(rootfile);
 #endif
-
+	//printf("here1: %d \n",rootfile);
 	if (!rootfile) return 0;
-	rootfile->cd("/");
-	TDirectory * direc = rootfile->GetDirectory(dirName.Data());
+	rootfile->cd("/"); 
+	TDirectory * direc = rootfile->GetDirectory(dirName.Data()); 
 	if (!direc)
 	{
 		//if not create it//
@@ -259,51 +264,60 @@ event_data * Root_file_handler::get_next_event(){
 }
 
 
-TNtuple * Root_file_handler::newNTuple(char *name, char * title, char *varlist, __int32 buffersize)
-{
-   TNtuple * nTuple = new TNtuple(name,title,varlist,buffersize);
-   return nTuple;
-}
 
 
 
 
-void Root_file_handler::NTupleD(__int32 id, const char *name, const char * title, const char *varlist, __int32 buffersize, double *data, const char * dir)
+
+
+void Root_file_handler::NTupleD( const char *name, const char * title, const char *varlist, __int32 buffersize, double *data, const char * dir)
 {
 	std::lock_guard<std::mutex> guard(mutex); //auto lock thread
 
-	MyNTuple = 0;
-	if (id <0 || id >= tuple_size) {
-		printf("\nError: NTuple-Id is smaller than 0 or greater than %i\n",tuple_size-1);
-		return;
-	}
-	//printf("here");
-	MyNTuple = (TNtupleD *) tuple_array[id];
 
-	//--if the histo does not exist create it first--//
-	if (!MyNTuple)
-	{
-		MyNTuple = new TNtupleD(name,title,varlist,buffersize);
-		MyNTuple->SetDirectory(getDir(RootFile,dir)); //put it in the wanted directory
+	if(!TNtupleD_started){
 
-		//--now add it to the list--//
-		tuple_array[id]= (TObject *) MyNTuple;
-		//--write it into root file--//
+		MyTNtuple = new TNtupleD(name,title,varlist,buffersize);
+		
+		//MyTNtuple->SetDirectory(getDir(RootFile,"Data")); //put it in the wanted directory
+		//printf("here");
+		TNtupleD_started = true;
 	}
 	//--check also if name is the same one--//
-	else if (strcmp(MyNTuple->GetName(),name))
+	if (strcmp(MyTNtuple->GetName(),name))
 	{
-		printf("name doesn't match(%d) is: %s and should be:%s \n",id, (MyNTuple->GetName()), name);
+		printf("name doesn't match: %s and should be:%s \n", (MyTNtuple->GetName()), name);
 	}
 
 	//--now fill it--//
-	if (MyNTuple) MyNTuple->Fill(data);
+	if (MyTNtuple) MyTNtuple->Fill(data);
 }
 
 void Root_file_handler::EventsWrittenCounter() {
 	std::lock_guard<std::mutex> guard(mutex); //auto lock thread
 	eventswritten++;
 }
+
+
+void Root_file_handler::write_TNtupleD(){
+	if (MyTNtuple) {
+		MyTNtuple->Write();
+	}
+	else{
+		printf("MyTNtuple does not appear to exsits");
+	}
+}
+void Root_file_handler::close_file(){
+	if (RootFile) {
+		RootFile->Close();
+		if(reading)		printf("Closing input root file: %s ...\n", rootfilename.c_str());
+		if(writing)		printf("Closing output root file: %s ...\n", rootfilename.c_str());
+	}
+	else{
+		printf("RootFile does not appear to exsits");
+	}
+}
+
 
 /////////////////////////////////////////////////////////////////////////////
 bool Root_file_handler::FileExists(const char * strFilename) {
