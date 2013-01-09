@@ -24,7 +24,7 @@
 #include <thread>
 #include <mutex>
 #include <math.h>
-
+#include <map>
 
  #include <sstream> //for string_to_double
 
@@ -75,9 +75,62 @@ void analysis(Root_file_handler * input_root_file, Root_file_handler * output_ro
 
 }
 
-void ProcessRootFile(string inputfilename, string outputfilename){
-	
-	Root_file_handler * input_root_file = new Root_file_handler(inputfilename, "read");
+//void ProcessRootFile(string inputfilename, string outputfilename){
+//	
+//	Root_file_handler * input_root_file = new Root_file_handler(inputfilename, "read");
+//	Root_file_handler * output_root_file = new Root_file_handler(outputfilename, "write");
+//	//event_data * single_event ;
+//
+//
+//
+//	//std::thread t1(analysis, input_root_file, output_root_file, 1.);
+//	//std::thread t2(analysis, input_root_file, output_root_file, 2.);
+//	//std::thread t3(analysis, input_root_file);
+//	//std::thread t4(analysis, input_root_file);
+//	//std::thread t5(analysis, input_root_file);
+//	//std::thread t6(analysis, input_root_file);
+//	//std::thread t7(analysis, input_root_file);
+//	//std::thread t8(analysis, input_root_file);
+//	
+//	analysis( input_root_file, output_root_file, 1);
+//
+//	//t1.join();
+//	//t2.join();
+//	//t3.join();
+//	//t4.join();
+//	//t5.join();
+//	//t6.join();
+//	//t7.join();
+//	//t8.join();
+//	
+//	H1i * hist1 = new H1i("test1", "test title", 100, 0., 10., "testx", "test_dir");
+//	//hist1->print_bin_contents();
+//	
+//	hist1->fill(5.5);
+//	//hist1->fill1(3.0);
+//	hist1->print_bin_contents();
+//
+//	input_root_file->close_file();
+//	output_root_file->write_TNtupleD();
+//	output_root_file->close_file();
+//	
+//	return;
+//}
+
+
+
+int main(__int32 argc, char* argv[], char* envp[])
+{
+	Red(true);
+	printf("Don't panic! Everything will be fine.\n");
+	White(false);
+
+
+	string inputfilename = "test.root";
+	string outputfilename = "output_test.root";
+	//ProcessRootFile(inputfilename, outputfilename);
+
+		Root_file_handler * input_root_file = new Root_file_handler(inputfilename, "read");
 	Root_file_handler * output_root_file = new Root_file_handler(outputfilename, "write");
 	//event_data * single_event ;
 
@@ -92,7 +145,7 @@ void ProcessRootFile(string inputfilename, string outputfilename){
 	//std::thread t7(analysis, input_root_file);
 	//std::thread t8(analysis, input_root_file);
 	
-	analysis( input_root_file, output_root_file, 1.);
+	analysis( input_root_file, output_root_file, 1);
 
 	//t1.join();
 	//t2.join();
@@ -103,32 +156,26 @@ void ProcessRootFile(string inputfilename, string outputfilename){
 	//t7.join();
 	//t8.join();
 	
-	H1i * hist1 = new H1i("test1", "test title", 10, 1, 10, "testx");
-	hist1->print();
+	H1i * hist1 = new H1i("test1", "test title", 100, 0., 10., "testx", "test_dir");
+	//hist1->print_bin_contents();
 	
-	hist1->fill1(5.5);
-	hist1->fill1(2.5);
-	hist1->print();
+	hist1->fill(5.5);
+	//hist1->fill1(3.0);
+	hist1->print_bin_contents();
+
+	//map<int, int> m ;
+	//m[1]=2;
+	//m[2]=3;
+	////m.insert(m::value_type(2, 3));
+
+	//printf("1=%i\n",m[1]);
+	//printf("2=%i\n",m[2]);
 
 	input_root_file->close_file();
 	output_root_file->write_TNtupleD();
 	output_root_file->close_file();
-	
-	return;
-}
-
-
-
-int main(__int32 argc, char* argv[], char* envp[])
-{
-	Red(true);
-	printf("Don't panic! Everything will be fine.\n");
-	White(false);
-
-
-	string inputfilename = "test.root";
-	string outputfilename = "output_test.root";
-	ProcessRootFile(inputfilename, outputfilename);
 
 	return 0;
 }
+
+

@@ -1,37 +1,71 @@
 #include <string>
 #include <vector>
-#include <thread>
-#include <mutex>
+#include <map>
+//#include <thread>
+//#include <mutex>
 
 using namespace std;
 
 
-class H1i
+class axis
 {
-	std::mutex mutex;
+//	std::mutex mutex;
+
+
+public:
 	int n_bins;
-	vector<int> bins;
-	double xMax, xMin;
+
+	double max, min;
 	string title;
 	string name;
-	string x_axis_label;
-public:
-	H1i(string Name, string Title,int N_bins, double XMin, double XMax, string X_axis_label);
-	//~H1i();
+	string axis_label;
+	__int32 overflow;
+	__int32 underflow;
 
-	void fill1(double x);
+	axis(string Name, string Title,int N_bins, double Min, double Max);
+	~axis();
+
+	int get_bin_address(double x);
 
 	//vector * get_bins();
-	void print();
+	//void print_bin_contents();
 
 };
 
+/////////////////////////////////////////////////////
+//1d histogram of ints (so no weighting is allows)
+class H1i 
+{
 
-//class Simple_Hist
-//{
-//
-//	public:
-//		//Simple_Hist();
-//		//~Simple_Hist();
-//
-//}
+//	std::mutex mutex;
+	//int n_bins;
+	
+	axis * Xaxis;
+	vector<int> bins;
+	string title;
+	string name;
+	string dir;
+public:
+	H1i(string Name, string Title,int N_bins, double Min, double Max, string X_axis_label, string Dir);
+	~H1i();
+
+	
+
+	//vector * get_bins();
+	void print_bin_contents();
+	void H1i::fill(double x);
+};
+
+
+
+///////////////////////////////////////////////////////
+//1d histogram of ints (so no weighting is allows)
+class histo_container
+{
+	map<string, int>  Table_1d_hists;
+	string name;
+public:
+	histo_container();
+	//~histo_container();
+
+};
