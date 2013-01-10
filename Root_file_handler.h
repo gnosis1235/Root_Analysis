@@ -23,17 +23,17 @@
 
 using namespace std;
 
+//
+//class TCanvas;
+//class TFile;
+////class TMinuit;
+//class TH1D;
+//class TH2D;
+//class TNtuple;
+//
+//class TTree;
 
-class TCanvas;
-class TFile;
-//class TMinuit;
-class TH1D;
-class TH2D;
-class TNtuple;
-
-class TTree;
-
-class rootstuff;
+//class rootstuff;
 struct event_data;
 
 

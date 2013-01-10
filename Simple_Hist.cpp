@@ -69,10 +69,10 @@ void H1i::fill(double x){
 	int bin_id = Xaxis->get_bin_address(x);
 	//printf("max%f:\n",Xaxis->max);
 	//printf("min%f:\n",Xaxis->min);
-	if (bin_id<0){
-		printf("bin_id%i:",bin_id);
-		return;
-	}
+	//if (bin_id<0){
+	//	printf("bin_id%i:",bin_id);
+	//	return;
+	//}
 	++bins[bin_id];
 }
 
@@ -89,7 +89,7 @@ void H1i::print_bin_contents(){
 	for (int i=0; i<((signed int)bins.size()); i++)
 	{
 		if (bins[i]!=0)	Red(true);
-			printf("%2.2f=<(bin%i)<%2.2f:%i   ",(double)i*bin_width+Xaxis->min,i,((double)i+1.)*bin_width+Xaxis->min,bins[i]);
+			printf("%2.f=<(bin%i)<%2.f:%i   ",(double)i*bin_width+Xaxis->min,i,((double)i+1.)*bin_width+Xaxis->min,bins[i]);
 		if (bins[i]!=0)	White(false);
 	
 		if((i+1)%10==0 ) printf("\n");
@@ -140,20 +140,29 @@ void histo_handler::fill1(string NAME, double x, string TITLE, int N_BINS, doubl
 
 
 void histo_handler::combine_hist(H1i * hist2){
-		if(h1i_map.count(NAME+DIR) == 0){ //if it dosen't exit just add it
-			h1i_map[NAME+DIR]=hist2;
-		}else{
-			if ( h1i_map[NAME+DIR]->match(hist2->name, hist2->title, hist2->Xaxis->n_bins, hist2->Xaxis->min, hist2->Xaxis->max, hist2->Xaxis->title, hist2->dir)){
-				 for(int i
+
+	string key = hist2->get_name() + hist2->get_dir();
+	
+	if(h1i_map.count(key) == 0){ //if it dosen't exit just add it
+		h1i_map[key]=hist2;
+	}
+	else{
+		if ( h1i_map[key]->match(hist2->get_name(), hist2->get_title(), hist2->get_X_n_bins(), hist2->get_X_min(), hist2->get_X_max(), hist2->get_X_title(), hist2->get_dir() )){
+		//if( *h1i_map[key] == *hist2){
+			for(int i=0; i < (int)hist2->bins.size(); ++i){
+				h1i_map[key]->bins[i] = h1i_map[key]->bins[i] + hist2->bins[i];
+			}
+			h1i_map[key]->set_X_overflow(  h1i_map[key]->get_X_overflow()  +	hist2->get_X_overflow() );
+			h1i_map[key]->set_X_underflow( h1i_map[key]->get_X_underflow() +	hist2->get_X_underflow() );
+		}
+		else {
+			Red(true);
+			cout<<"ERROR in combine_hist()"<<endl;
+			cout<<"ERROR: Histogram is:";	hist2->print_info();
+			cout<<"   And it should be:";	h1i_map[key]->print_info();
 				
-			}
-			else {
-				Red(true);
-				cout<<"ERROR: Histogram is:"<<NAME<< ", "<< TITLE<< ", "<< N_BINS<< ", "<< MIN<< ", "<< MAX<< ", "<< X_LABEL<< ", "<< DIR<<endl;
-				cout<<"And it should be   :";
-				h1i_map[NAME+DIR]->print_info();
-				White(false);
-			}
+			White(false);
+		}
 
 		}
 }

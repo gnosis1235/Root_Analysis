@@ -43,12 +43,12 @@ using namespace std;
 
 void analysis(Root_file_handler * input_root_file, Root_file_handler * output_root_file, int thread_id, histo_handler * Hist){
 	
-	event_data * single_event ;
+	
 	double NTupleData[5];
 	bool WriteNTuple = false;
 
 	for(int idx=0;idx<10;idx++){
-		single_event = input_root_file->get_next_event();
+		event_data * event  = input_root_file->get_next_event();
 		
 		//std::chrono::milliseconds sleepDuration(50);
 		//std::this_thread::sleep_for(sleepDuration);
@@ -62,8 +62,10 @@ void analysis(Root_file_handler * input_root_file, Root_file_handler * output_ro
 		//
 		//single_event->reaction = pow((double)idx,1000);
 		
-		Hist->fill1("test1", 5.5,"test title", 100, 0., 10., "testx", "test_dir");
-		Hist->fill1("test1", 1.,"test title", 100, 0., 10., "testx", "test_dir");
+
+		Hist->fill1("test1", idx,"test title", 100, 0., 100., "testx", "test_dir");
+
+		Hist->fill1("test2", idx*2,"test title", 100, 0., 100., "testx", "test_dir");
 
 		NTupleData[0]=idx;
 		NTupleData[1]=thread_id;
@@ -73,7 +75,7 @@ void analysis(Root_file_handler * input_root_file, Root_file_handler * output_ro
 			output_root_file->NTupleD("Data","test_file","idx:threadID",32000,NTupleData);
 			output_root_file->EventsWrittenCounter();
 		}
-		
+		delete event;
 	}	
 
 }
@@ -138,10 +140,10 @@ int main(__int32 argc, char* argv[], char* envp[])
 	//event_data * single_event ;
 
 
-	histo_handler * Hist1 = new histo_handler();
-	histo_handler * Hist2 = new histo_handler();
-	std::thread t1(analysis, input_root_file, output_root_file, 1., Hist1);
-	std::thread t2(analysis, input_root_file, output_root_file, 2., Hist1);
+	histo_handler * Histogram_Handler1 = new histo_handler();
+	histo_handler * Histogram_Handler2 = new histo_handler();
+	std::thread t1(analysis, input_root_file, output_root_file, 1., Histogram_Handler1);
+	std::thread t2(analysis, input_root_file, output_root_file, 2., Histogram_Handler2);
 	//std::thread t3(analysis, input_root_file);
 	//std::thread t4(analysis, input_root_file);
 	//std::thread t5(analysis, input_root_file);
@@ -185,6 +187,29 @@ int main(__int32 argc, char* argv[], char* envp[])
 
 	//Hist->fill1("test1", 5.7,"test title", 10, 0., 10., "testx", "test_dir");
 	//Hist->h1i_map["test1"]->print_bin_contents();
+
+	string key = "test1test_dir";
+	//Histogram_Handler1->h1i_map[key]->print_bin_contents();
+	
+	for (	Histogram_Handler2->h1i_map_iterator = Histogram_Handler2->h1i_map.begin(); 
+			Histogram_Handler2->h1i_map_iterator != Histogram_Handler2->h1i_map.end();
+			++Histogram_Handler2->h1i_map_iterator	) {
+
+		Histogram_Handler1->h1i_map[ Histogram_Handler2->h1i_map_iterator->first ]->print_bin_contents();
+		Histogram_Handler1->combine_hist(Histogram_Handler2->h1i_map_iterator->second );
+		Histogram_Handler1->h1i_map[ Histogram_Handler2->h1i_map_iterator->first ]->print_bin_contents();
+	}
+	
+	//unordered_map<string, int> map;
+	//map["test1"]=1;
+	//map["test2"]=2;
+	//map.begin();
+	//map.end();
+	//
+	//for(unordered_map<string, int>::iterator it = map.begin(); it != map.end(); ++it){
+	//	cout<< it->second <<endl;
+	//}
+
 
 	input_root_file->close_file();
 	output_root_file->write_TNtupleD();
