@@ -24,7 +24,7 @@
 #include <thread>
 #include <mutex>
 #include <math.h>
-#include <map>
+#include <unordered_map> 
 
  #include <sstream> //for string_to_double
 
@@ -41,7 +41,7 @@ using namespace std;
  }
 
 
-void analysis(Root_file_handler * input_root_file, Root_file_handler * output_root_file, int thread_id){
+void analysis(Root_file_handler * input_root_file, Root_file_handler * output_root_file, int thread_id, histo_handler * Hist){
 	
 	event_data * single_event ;
 	double NTupleData[5];
@@ -62,6 +62,9 @@ void analysis(Root_file_handler * input_root_file, Root_file_handler * output_ro
 		//
 		//single_event->reaction = pow((double)idx,1000);
 		
+		Hist->fill1("test1", 5.5,"test title", 100, 0., 10., "testx", "test_dir");
+		Hist->fill1("test1", 1.,"test title", 100, 0., 10., "testx", "test_dir");
+
 		NTupleData[0]=idx;
 		NTupleData[1]=thread_id;
 
@@ -135,9 +138,10 @@ int main(__int32 argc, char* argv[], char* envp[])
 	//event_data * single_event ;
 
 
-
-	//std::thread t1(analysis, input_root_file, output_root_file, 1.);
-	//std::thread t2(analysis, input_root_file, output_root_file, 2.);
+	histo_handler * Hist1 = new histo_handler();
+	histo_handler * Hist2 = new histo_handler();
+	std::thread t1(analysis, input_root_file, output_root_file, 1., Hist1);
+	std::thread t2(analysis, input_root_file, output_root_file, 2., Hist1);
 	//std::thread t3(analysis, input_root_file);
 	//std::thread t4(analysis, input_root_file);
 	//std::thread t5(analysis, input_root_file);
@@ -145,10 +149,10 @@ int main(__int32 argc, char* argv[], char* envp[])
 	//std::thread t7(analysis, input_root_file);
 	//std::thread t8(analysis, input_root_file);
 	
-	analysis( input_root_file, output_root_file, 1);
+	//analysis( input_root_file, output_root_file, 1);
 
-	//t1.join();
-	//t2.join();
+	t1.join();
+	t2.join();
 	//t3.join();
 	//t4.join();
 	//t5.join();
@@ -156,20 +160,31 @@ int main(__int32 argc, char* argv[], char* envp[])
 	//t7.join();
 	//t8.join();
 	
-	H1i * hist1 = new H1i("test1", "test title", 100, 0., 10., "testx", "test_dir");
+	//H1i * hist1 = new H1i("test1", "test title", 100, 0., 10., "testx", "test_dir");
+	//H1i * hist1 = new H1i("test1", "test title", 100, 0., 10., "testx", "test_dir");
+	//H1i * hist2 = new H1i("test1", "test title", 100, 0., 10., "testx", "test_dir");
 	//hist1->print_bin_contents();
 	
-	hist1->fill(5.5);
-	//hist1->fill1(3.0);
-	hist1->print_bin_contents();
+	//hist1->fill(5.5);
+	//hist2->fill(2.5);
 
-	//map<int, int> m ;
-	//m[1]=2;
-	//m[2]=3;
-	////m.insert(m::value_type(2, 3));
 
-	//printf("1=%i\n",m[1]);
-	//printf("2=%i\n",m[2]);
+	//unordered_map<string, H1i*> map;
+
+	//map["test"]=hist1;
+	//
+	//printf("a=%s\n",map["test"]->title.c_str());
+	//hist1->title="crap";
+	//printf("a=%s\n",map["test"]->title.c_str());
+
+	//histo_handler * Hist = new histo_handler();
+
+	//Hist->fill1("test1", 5.5,"test title", 100, 0., 10., "testx", "test_dir");
+
+	//Hist->fill1("test1", 5.7,"test title", 100, 0., 10., "testx", "test_dir");
+
+	//Hist->fill1("test1", 5.7,"test title", 10, 0., 10., "testx", "test_dir");
+	//Hist->h1i_map["test1"]->print_bin_contents();
 
 	input_root_file->close_file();
 	output_root_file->write_TNtupleD();

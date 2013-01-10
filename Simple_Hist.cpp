@@ -45,6 +45,7 @@ int axis::get_bin_address(double x){
 
 ////////////////////////////////////////////  H1i  ////////////////////////////////////////////
 
+H1i::H1i(){};
 
 H1i::H1i(string Name, string Title,int N_bins, double Min, double Max, string X_axis_label, string Dir){
 		
@@ -66,8 +67,8 @@ H1i::~H1i(){}
 
 void H1i::fill(double x){
 	int bin_id = Xaxis->get_bin_address(x);
-	printf("max%f:\n",Xaxis->max);
-	printf("min%f:\n",Xaxis->min);
+	//printf("max%f:\n",Xaxis->max);
+	//printf("min%f:\n",Xaxis->min);
 	if (bin_id<0){
 		printf("bin_id%i:",bin_id);
 		return;
@@ -82,9 +83,9 @@ void H1i::fill(double x){
 void H1i::print_bin_contents(){
 	//std::lock_guard<std::mutex> guard(mutex); //auto lock thread
 	printf("\n");
-	printf("\nnumber of bins=%i\n",bins.size());
+	//printf("\nnumber of bins=%i\n",bins.size());
 	double bin_width = (Xaxis->max-Xaxis->min)/Xaxis->n_bins;
-	printf("bin widh=%f\n", bin_width);
+	//printf("bin widh=%f\n", bin_width);
 	for (int i=0; i<((signed int)bins.size()); i++)
 	{
 		if (bins[i]!=0)	Red(true);
@@ -99,22 +100,63 @@ void H1i::print_bin_contents(){
 	return;
 }
 
+bool H1i::match(string NAME, string TITLE, int N_BINS, double MIN, double MAX, string X_LABEL, string DIR){
+	return NAME==this->name && TITLE==this->title && N_BINS==this->Xaxis->n_bins && MIN==this->Xaxis->min && MAX==this->Xaxis->max && X_LABEL==this->Xaxis->title && DIR==this->dir; 
+}
 
+void H1i::print_info(){
+	cout<<name<< ", "<< title<< ", "<< Xaxis->n_bins << ", "<< Xaxis->min<< ", "<< Xaxis->max<< ", "<< Xaxis->title<< ", "<< dir <<endl;
+
+}
 ////////////////////////////////////////////  end  ////////////////////////////////////////////
 
 
 ////////////////////////////////////////////  histo_container  ////////////////////////////////////////////
 
-histo_container::histo_container(){
-	string Name = "test1";
-	string Name2 = "test2";
+histo_handler::histo_handler(){
 
-	H1i temp = H1i("test1", "test title", 100, 0., 10., "testx", "test_dir");
-	Table_1d_hists["test1"] = 1;
-	//std::map<std::string, double>  test = { {Name, 5.5} , {Name2, 5.5}};
-	//map<int, int> m = {{1,2}, {3,4}, {5,6}, {7,8}};
 }
 
-//histo_container::~histo_container(){
+void histo_handler::fill1(string NAME, double x, string TITLE, int N_BINS, double MIN, double MAX, string X_LABEL, string DIR){
+	
+	if(h1i_map.count(NAME+DIR) == 0){
+		H1i * hist = new H1i(NAME, TITLE, N_BINS, MIN, MAX, X_LABEL, DIR);
+		h1i_map[NAME+DIR]=hist;
+	}else{
+		if ( h1i_map[NAME+DIR]->match(NAME, TITLE, N_BINS, MIN, MAX, X_LABEL, DIR)){
+			h1i_map[NAME+DIR]->fill(x);
+		}
+		else {
+			Red(true);
+			cout<<"ERROR: Histogram is:"<<NAME<< ", "<< TITLE<< ", "<< N_BINS<< ", "<< MIN<< ", "<< MAX<< ", "<< X_LABEL<< ", "<< DIR<<endl;
+			cout<<"And it should be   :";
+			h1i_map[NAME+DIR]->print_info();
+			White(false);
+		}
+	}
+	return;
+
+}
+
+
+void histo_handler::combine_hist(H1i * hist2){
+		if(h1i_map.count(NAME+DIR) == 0){ //if it dosen't exit just add it
+			h1i_map[NAME+DIR]=hist2;
+		}else{
+			if ( h1i_map[NAME+DIR]->match(hist2->name, hist2->title, hist2->Xaxis->n_bins, hist2->Xaxis->min, hist2->Xaxis->max, hist2->Xaxis->title, hist2->dir)){
+				 for(int i
+				
+			}
+			else {
+				Red(true);
+				cout<<"ERROR: Histogram is:"<<NAME<< ", "<< TITLE<< ", "<< N_BINS<< ", "<< MIN<< ", "<< MAX<< ", "<< X_LABEL<< ", "<< DIR<<endl;
+				cout<<"And it should be   :";
+				h1i_map[NAME+DIR]->print_info();
+				White(false);
+			}
+
+		}
+}
+//histo_handler::~histo_handler(){
 //
 //}
