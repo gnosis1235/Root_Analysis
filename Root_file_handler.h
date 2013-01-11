@@ -38,10 +38,12 @@ using namespace std;
 struct event_data;
 
 class H1i;
+class H2i;
 
 class Root_file_handler
 {
-	std::mutex mutex;
+	std::mutex mutex; //thread locking
+
 	string rootfilename;
 	TFile * RootFile;
 	//rootstuff * rt;
@@ -78,7 +80,10 @@ public:
 	void close_file();
 
 	void add_hist(H1i * hist);
+	void add_hist(H2i * hist);
 
+	inline __int64 get_Total_Events_inputfile(){return Total_Events_inputfile;}
+	inline __int64 get_current_entry_inputfile(){return current_entry_inputfile;}
 
 };
 

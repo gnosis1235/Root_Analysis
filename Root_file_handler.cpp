@@ -207,7 +207,6 @@ TTree * Root_file_handler::OpenRootFileGetTree(const char *TreeName)
 
 TDirectory* Root_file_handler::getDir(TFile *rootfile, TString dirName)
 {
-	cout<< dirName.Data()  << endl;
 	//first find out whether directory exists
 #ifdef _DEBUG
 	assert(rootfile);
@@ -272,9 +271,9 @@ event_data * Root_file_handler::get_next_event(){
 	current_entry_inputfile++;
 
 	event_data * event = new event_data();
-	
+	//copy data to a disposible event_data (will be deleted when analysis is finsihed)
+	//should change this a memcpy
 	(*event).bunchmarker = (*single_event).bunchmarker;
-	
 	(*event).rhit		= (*single_event).rhit;
 	(*event).ehit		= (*single_event).ehit;
 	(*event).phit		= (*single_event).phit;
@@ -330,6 +329,7 @@ void Root_file_handler::NTupleD( const char *name, const char * title, const cha
 
 	//--now fill it--//
 	if (MyTNtuple) MyTNtuple->Fill(data);
+	++eventswritten;
 }
 
 void Root_file_handler::EventsWrittenCounter() {
@@ -371,13 +371,13 @@ void Root_file_handler::add_hist(H1i * hist){
 	Histograms_dir->cd();
 
 	// create root hist
-	TH1I * root_hist =new TH1I(hist->get_name().c_str(), hist->get_title().c_str(), (Int_t)hist->get_X_n_bins(), (Double_t)hist->get_X_min(), (Double_t)hist->get_X_max() );
+	TH1I * root_hist =new TH1I(hist->get_name().c_str(), hist->get_title().c_str(), hist->get_X_n_bins(), hist->get_X_min(), hist->get_X_max() );
 	// copy contents
 	root_hist->SetBinContent( 0 , hist->get_X_underflow() );
-	for(int i=0; i < (int)hist->bins.size(); ++i){
+	for(int i=0; i < hist->get_X_n_bins(); ++i){
 		root_hist->SetBinContent( i+1, hist->bins[i]);
 	}
-	root_hist->SetBinContent( 0 , hist->get_X_overflow() );
+	root_hist->SetBinContent( hist->get_X_n_bins()+1 , hist->get_X_overflow() );
 	//set axis title
 	root_hist->SetXTitle( hist->get_X_title().c_str() );
 
@@ -387,6 +387,29 @@ void Root_file_handler::add_hist(H1i * hist){
 
 
 
+void Root_file_handler::add_hist(H2i * hist){
+	//change/make directory 
+	Histograms_dir = getDir(RootFile, hist->get_dir() );
+	Histograms_dir->cd();
+
+	// create root hist
+	TH2I * root_hist =new TH2I(hist->get_name().c_str(), hist->get_title().c_str(), hist->get_X_n_bins(), hist->get_X_min(), hist->get_X_max(), hist->get_Y_n_bins(), hist->get_Y_min(), hist->get_Y_max() );
+	// copy contents
+	root_hist->SetBinContent( 0, 1, hist->get_X_underflow() );
+	root_hist->SetBinContent( 1, 0, hist->get_Y_underflow() );
+	for(int i=0; i < hist->get_X_n_bins(); ++i){
+		for(int j=0; j < hist->get_Y_n_bins(); ++j){
+			root_hist->SetBinContent( i+1, j+1, hist->bins[i][j]);
+		}
+	}
+	root_hist->SetBinContent( hist->get_X_n_bins()+1, 1 , hist->get_X_overflow() );
+	root_hist->SetBinContent( 1, hist->get_Y_n_bins()+1 , hist->get_Y_overflow() );
+	//set axis title
+	root_hist->SetXTitle( hist->get_X_title().c_str() );
+	root_hist->SetYTitle( hist->get_Y_title().c_str() );
+	//write to root file
+	root_hist->Write(hist->get_name().c_str() );
+}
 
 
 

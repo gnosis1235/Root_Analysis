@@ -28,7 +28,7 @@ axis::~axis(){
 
 int axis::get_bin_address(double x){
 	//std::lock_guard<std::mutex> guard(mutex); //auto lock thread
-	if(x>max){
+	if(x>=max){
 		overflow++;
 		return -1;
 	}
@@ -53,7 +53,7 @@ H1i::H1i(string Name, string Title,int N_bins, double Min, double Max, string X_
 	name = Name;
 	dir = Dir;
 
-	Xaxis = new axis("xaxis", X_axis_label, N_bins, Min, Max );
+	Xaxis = new axis("Xaxis", X_axis_label, N_bins, Min, Max );
 
 	//initialise all bins to 0
 	for (int i=0; i<N_bins; i++)
@@ -67,18 +67,10 @@ H1i::~H1i(){}
 
 void H1i::fill(double x){
 	int bin_id = Xaxis->get_bin_address(x);
-	//printf("max%f:\n",Xaxis->max);
-	//printf("min%f:\n",Xaxis->min);
-	//if (bin_id<0){
-	//	printf("bin_id%i:",bin_id);
-	//	return;
-	//}
-	++bins[bin_id];
+	// add one to the bin if it isn't overflow are underflow
+	if (bin_id !=-1) ++bins[bin_id];
 }
 
-//vector  * H1i::get_bins(){
-//	return &bins;
-//}
 
 void H1i::print_bin_contents(){
 	//std::lock_guard<std::mutex> guard(mutex); //auto lock thread
@@ -108,7 +100,75 @@ void H1i::print_info(){
 	cout<<name<< ", "<< title<< ", "<< Xaxis->n_bins << ", "<< Xaxis->min<< ", "<< Xaxis->max<< ", "<< Xaxis->title<< ", "<< dir <<endl;
 
 }
-////////////////////////////////////////////  end  ////////////////////////////////////////////
+////////////////////////////////////////////  H1i end  ////////////////////////////////////////////
+
+////////////////////////////////////////////  H2i  ////////////////////////////////////////////
+
+H2i::H2i(){};
+
+H2i::H2i(string Name, string Title,int X_N_bins, double X_Min, double X_Max, string X_axis_label,int Y_N_bins, double Y_Min, double Y_Max, string Y_axis_label, string Dir){
+		
+	title = Title;
+	name = Name;
+	dir = Dir;
+
+	Xaxis = new axis("Xaxis", X_axis_label, X_N_bins, X_Min, X_Max );
+	Yaxis = new axis("Yaxis", Y_axis_label, Y_N_bins, Y_Min, Y_Max );
+
+	//initialise all bins to 0
+	//bins[x][y]
+	vector<int> col;
+	for (int j=0; j<Y_N_bins; j++)
+	{
+		col.push_back(0);
+	}
+
+	for (int i=0; i<X_N_bins; i++)
+	{
+		bins.push_back(col);
+	}
+}
+
+H2i::~H2i(){}
+
+void H2i::fill(double x, double y){
+	int bin_id_x = Xaxis->get_bin_address(x);
+	int bin_id_y = Yaxis->get_bin_address(y);
+	// add one to the bin if it isn't overflow are underflow
+	if (bin_id_x !=-1 && bin_id_y !=-1) ++bins[bin_id_x][bin_id_y];
+	return;
+}
+
+
+//void H2i::print_bin_contents(){
+//	//std::lock_guard<std::mutex> guard(mutex); //auto lock thread
+//	printf("\n");
+//	//printf("\nnumber of bins=%i\n",bins.size());
+//	double bin_width = (Xaxis->max-Xaxis->min)/Xaxis->n_bins;
+//	//printf("bin widh=%f\n", bin_width);
+//	for (int i=0; i<((signed int)bins.size()); i++)
+//	{
+//		if (bins[i]!=0)	Red(true);
+//			printf("%2.f=<(bin%i)<%2.f:%i   ",(double)i*bin_width+Xaxis->min,i,((double)i+1.)*bin_width+Xaxis->min,bins[i]);
+//		if (bins[i]!=0)	White(false);
+//	
+//		if((i+1)%10==0 ) printf("\n");
+//		
+//	}
+//	
+//	printf("\n");
+//	return;
+//}
+
+bool H2i::match(string NAME, string TITLE, int X_N_BINS, double X_MIN, double X_MAX, string X_LABEL, int Y_N_BINS, double Y_MIN, double Y_MAX, string Y_LABEL,  string DIR){
+	return NAME==this->name && TITLE==this->title && X_N_BINS==this->Xaxis->n_bins && X_MIN==this->Xaxis->min && X_MAX==this->Xaxis->max && X_LABEL==this->Xaxis->title && Y_N_BINS==this->Yaxis->n_bins && Y_MIN==this->Yaxis->min && Y_MAX==this->Yaxis->max && Y_LABEL==this->Yaxis->title && DIR==this->dir; 
+}
+
+void H2i::print_info(){
+	cout<<name<< ", "<< title<< ", "<< Xaxis->n_bins << ", "<< Xaxis->min<< ", "<< Xaxis->max<< ", "<< Xaxis->title<< ", ";
+	cout<< Yaxis->n_bins << ", "<< Yaxis->min<< ", "<< Yaxis->max<< ", "<< Yaxis->title<< ", "<< dir <<endl;
+}
+////////////////////////////////////////////  H2i end  ////////////////////////////////////////////
 
 
 ////////////////////////////////////////////  histo_container  ////////////////////////////////////////////
@@ -166,6 +226,61 @@ void histo_handler::combine_hist(H1i * hist2){
 
 		}
 }
-//histo_handler::~histo_handler(){
-//
-//}
+
+
+void histo_handler::fill2(string NAME, double x, double y, string TITLE, int X_N_BINS, double X_MIN, double X_MAX, string X_LABEL, int Y_N_BINS, double Y_MIN, double Y_MAX, string Y_LABEL, string DIR){
+	
+	if(h2i_map.count(NAME+DIR) == 0){
+		H2i * hist = new H2i(NAME, TITLE, X_N_BINS, X_MIN, X_MAX, X_LABEL, Y_N_BINS, Y_MIN, Y_MAX, Y_LABEL, DIR);
+		h2i_map[NAME+DIR]=hist;
+		printf("add new\n");
+	}else{
+		if ( h2i_map[NAME+DIR]->match(NAME, TITLE, X_N_BINS, X_MIN, X_MAX, X_LABEL,  Y_N_BINS, Y_MIN, Y_MAX, Y_LABEL, DIR)){
+			//
+			h2i_map[NAME+DIR]->fill(x,y);
+		}
+		else {
+			Red(true);
+			cout<<"ERROR: Histogram is:"<<NAME<< ", "<< TITLE<< ", "<< X_N_BINS<< ", "<< X_MIN<< ", "<< X_MAX<< ", "<< X_LABEL<< ", "<< DIR<<endl;
+			cout<<"And it should be   :";
+			h2i_map[NAME+DIR]->print_info();
+			White(false);
+		}
+	}
+	return;
+
+}
+	
+	
+void histo_handler::combine_hist(H2i * hist2){
+	string key = hist2->get_name() + hist2->get_dir();
+	
+	if(h2i_map.count(key) == 0){ //if it dosen't exit just add it
+		h2i_map[key]=hist2;
+	}
+	else{
+		if ( h2i_map[key]->match(hist2->get_name(), hist2->get_title(), hist2->get_X_n_bins(), hist2->get_X_min(), hist2->get_X_max(), hist2->get_X_title(), hist2->get_Y_n_bins(), hist2->get_Y_min(), hist2->get_Y_max(), hist2->get_Y_title(), hist2->get_dir() )){
+			for(int i=0; i < (int)hist2->get_X_n_bins(); ++i){
+				for(int j=0; j < (int)hist2->get_Y_n_bins(); ++j){
+					h2i_map[key]->bins[i][j] = h2i_map[key]->bins[i][j] + hist2->bins[i][j];
+				}
+			}
+
+			h2i_map[key]->set_X_overflow(  h2i_map[key]->get_X_overflow()  +	hist2->get_X_overflow() );
+			h2i_map[key]->set_X_underflow( h2i_map[key]->get_X_underflow() +	hist2->get_X_underflow() );
+			
+			h2i_map[key]->set_Y_overflow(  h2i_map[key]->get_Y_overflow()  +	hist2->get_Y_overflow() );
+			h2i_map[key]->set_Y_underflow( h2i_map[key]->get_Y_underflow() +	hist2->get_Y_underflow() );
+			
+		}
+		else {
+			Red(true);
+			cout<<"ERROR in combine_hist()"<<endl;
+			cout<<"ERROR: Histogram is:";	hist2->print_info();
+			cout<<"   And it should be:";	h2i_map[key]->print_info();
+				
+			White(false);
+		}
+
+		}
+}																															

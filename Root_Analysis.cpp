@@ -41,13 +41,13 @@ using namespace std;
  }
 
 
-void analysis(Root_file_handler * input_root_file, Root_file_handler * output_root_file, int thread_id, histo_handler * Hist){
+void analysis(Root_file_handler * input_root_file, Root_file_handler * output_root_file, int thread_id, histo_handler * Hist, __int64 num_events){
 	
 	
 	double NTupleData[5];
 	bool WriteNTuple = false;
 
-	for(int idx=0;idx<10;idx++){
+	for(__int64 idx=0;idx<num_events;idx++){
 		event_data * event  = input_root_file->get_next_event();
 		
 		//std::chrono::milliseconds sleepDuration(50);
@@ -62,10 +62,17 @@ void analysis(Root_file_handler * input_root_file, Root_file_handler * output_ro
 		
 		//single_event->reaction = pow((double)idx,1000);
 		
+		
+		Hist->fill1("test", 5.6,"test title", 1000, 0., 10., "testx", "Histograms");
+		Hist->fill1("test", 15.6,"test title", 1000, 0., 10., "testx", "Histograms");
 
-		//Hist->fill1("test1", idx,"test title", 100, 0., 100., "testx", "test1dir");
+		Hist->fill1("test1", idx,"test title", 1000, -1., 1000., "testx", "Histograms");
 
-		//Hist->fill1("test2", idx*2,"test title", 100, 0., 100., "testx", "test2dir");
+		Hist->fill1("test2", idx*2,"test title", 1000, -1, 1000., "testx", "Histograms");
+
+		Hist->fill2("test1", idx, idx,"test title", 1000, 0., 1000., "testx", 1000, 0., 1000., "testy", "Histograms");
+		Hist->fill2("test2", idx/2., idx/2.,"test title", 1000, 0., 1000., "testx", 1000, 0., 1000., "testy", "Histograms");
+		Hist->fill2("test3", idx/2., idx/2.,"test title", 1000, 0., 100., "testx", 1000, 0., 1000., "testy", "Histograms");
 
 		NTupleData[0]=idx;
 		NTupleData[1]=thread_id;
@@ -132,6 +139,7 @@ int main(__int32 argc, char* argv[], char* envp[])
 	printf("Don't panic! Everything will be fine.\n");
 	White(false);
 
+	int number_of_threads=1;
 
 	string inputfilename = "test.root";
 	string outputfilename = "output_test.root";
@@ -142,23 +150,35 @@ int main(__int32 argc, char* argv[], char* envp[])
 	//event_data * single_event ;
 
 
-	histo_handler * Histogram_Handler1 = new histo_handler();
-	histo_handler * Histogram_Handler2 = new histo_handler();
+	histo_handler * Histogram_Handler_array[8];
+	for(int i=0; i<number_of_threads;++i){
+		Histogram_Handler_array[i]= new histo_handler();
+	}
+
+	__int64 num_events_per_thread = input_root_file->get_Total_Events_inputfile()/((__int64)number_of_threads) -1; 
+	//lanuch threads
+	std::vector<std::thread> threads;
+	for(int i = 0; i < number_of_threads; ++i){
+		threads.push_back(std::thread(analysis, input_root_file, output_root_file, i, Histogram_Handler_array[i], num_events_per_thread));
+	}
+
+	for(auto& thread : threads){
+		thread.join();
+	}
 
 
-	std::thread t1(analysis, input_root_file, output_root_file, 1., Histogram_Handler1);
-	std::thread t2(analysis, input_root_file, output_root_file, 2., Histogram_Handler2);
-	//std::thread t3(analysis, input_root_file);
-	//std::thread t4(analysis, input_root_file);
-	//std::thread t5(analysis, input_root_file);
-	//std::thread t6(analysis, input_root_file);
-	//std::thread t7(analysis, input_root_file);
-	//std::thread t8(analysis, input_root_file);
-	
-	//analysis( input_root_file, output_root_file, 1);
+	//std::thread t1(analysis, input_root_file, output_root_file, 1., Histogram_Handler_array[0], num_events_per_thread);
+	//std::thread t2(analysis, input_root_file, output_root_file, 2., Histogram_Handler_array[1], num_events_per_thread);
+	//std::thread t3(analysis, input_root_file, output_root_file, 3., Histogram_Handler_array[2], num_events_per_thread);
+	//std::thread t4(analysis, input_root_file, output_root_file, 4., Histogram_Handler_array[3], num_events_per_thread);
+	//std::thread t5(analysis, input_root_file, output_root_file, 5., Histogram_Handler_array[4], num_events_per_thread);
+	//std::thread t6(analysis, input_root_file, output_root_file, 6., Histogram_Handler_array[5], num_events_per_thread);
+	//std::thread t7(analysis, input_root_file, output_root_file, 7., Histogram_Handler_array[6], num_events_per_thread);
+	//std::thread t8(analysis, input_root_file, output_root_file, 8., Histogram_Handler_array[7], num_events_per_thread);	
+	////analysis( input_root_file, output_root_file, 1);
 
-	t1.join();
-	t2.join();
+	//t1.join();
+	//t2.join();
 	//t3.join();
 	//t4.join();
 	//t5.join();
@@ -171,58 +191,49 @@ int main(__int32 argc, char* argv[], char* envp[])
 	//H1i * hist2 = new H1i("test1", "test title", 100, 0., 10., "testx", "test_dir");
 	//hist1->print_bin_contents();
 	
-	//hist1->fill(5.5);
-	//hist2->fill(2.5);
-
-
-	//unordered_map<string, H1i*> map;
-
-	//map["test"]=hist1;
-	//
-	//printf("a=%s\n",map["test"]->title.c_str());
-	//hist1->title="crap";
-	//printf("a=%s\n",map["test"]->title.c_str());
-
-	//histo_handler * Hist = new histo_handler();
-
-	//Hist->fill1("test1", 5.5,"test title", 100, 0., 10., "testx", "test_dir");
-
-	//Hist->fill1("test1", 5.7,"test title", 100, 0., 10., "testx", "test_dir");
-
-	//Hist->fill1("test1", 5.7,"test title", 10, 0., 10., "testx", "test_dir");
-	//Hist->h1i_map["test1"]->print_bin_contents();
-
-	string key = "test1test_dir";
-	//Histogram_Handler1->h1i_map[key]->print_bin_contents();
+	
 	
 
 	//combine the historams form each thread
-	for (	Histogram_Handler2->h1i_map_iterator =  Histogram_Handler2->h1i_map.begin(); 
-			Histogram_Handler2->h1i_map_iterator != Histogram_Handler2->h1i_map.end();
-			++Histogram_Handler2->h1i_map_iterator	) {
+	// iterate over the Histogram_Handler_array
+	// store the results in Histogram_Handler_array[0]
+	for(int i=0; i<number_of_threads;++i){
+		//the 1d histograms
+		for (	Histogram_Handler_array[i]->h1i_map_iterator =  Histogram_Handler_array[i]->h1i_map.begin(); 
+				Histogram_Handler_array[i]->h1i_map_iterator != Histogram_Handler_array[i]->h1i_map.end();
+				++Histogram_Handler_array[i]->h1i_map_iterator	) {
 
-		Histogram_Handler1->h1i_map[ Histogram_Handler2->h1i_map_iterator->first ]->print_bin_contents();
-		Histogram_Handler1->combine_hist(Histogram_Handler2->h1i_map_iterator->second );
-		Histogram_Handler1->h1i_map[ Histogram_Handler2->h1i_map_iterator->first ]->print_bin_contents();
+			//Histogram_Handler1->h1i_map[ Histogram_Handler2->h1i_map_iterator->first ]->print_bin_contents();
+			Histogram_Handler_array[0]->combine_hist(Histogram_Handler_array[i]->h1i_map_iterator->second );
+			//Histogram_Handler1->h1i_map[ Histogram_Handler2->h1i_map_iterator->first ]->print_bin_contents();
+		}
+		//the 2d histograms
+		for (	Histogram_Handler_array[i]->h2i_map_iterator =  Histogram_Handler_array[i]->h2i_map.begin(); 
+				Histogram_Handler_array[i]->h2i_map_iterator != Histogram_Handler_array[i]->h2i_map.end();
+				++Histogram_Handler_array[i]->h2i_map_iterator	) {
+
+			//Histogram_Handler1->h2i_map[ Histogram_Handler2->h2i_map_iterator->first ]->print_bin_contents();
+			Histogram_Handler_array[0]->combine_hist(Histogram_Handler_array[i]->h2i_map_iterator->second );
+			//Histogram_Handler1->h2i_map[ Histogram_Handler2->h2i_map_iterator->first ]->print_bin_contents();
+		}
 	}
-	
-	//write histograms to the root file
-	for (	Histogram_Handler1->h1i_map_iterator =  Histogram_Handler1->h1i_map.begin(); 
-			Histogram_Handler1->h1i_map_iterator != Histogram_Handler1->h1i_map.end();
-			++Histogram_Handler1->h1i_map_iterator	) {
 
-				output_root_file->add_hist( Histogram_Handler1->h1i_map_iterator->second );
+
+	//write 1D histograms to the root file
+	for (	Histogram_Handler_array[0]->h1i_map_iterator =  Histogram_Handler_array[0]->h1i_map.begin(); 
+			Histogram_Handler_array[0]->h1i_map_iterator != Histogram_Handler_array[0]->h1i_map.end();
+			++Histogram_Handler_array[0]->h1i_map_iterator	) {
+
+				output_root_file->add_hist( Histogram_Handler_array[0]->h1i_map_iterator->second );
 	}
 
-	//unordered_map<string, int> map;
-	//map["test1"]=1;
-	//map["test2"]=2;
-	//map.begin();
-	//map.end();
-	//
-	//for(unordered_map<string, int>::iterator it = map.begin(); it != map.end(); ++it){
-	//	cout<< it->second <<endl;
-	//}
+	//write 2D histograms to the root file
+	for (	Histogram_Handler_array[0]->h2i_map_iterator =  Histogram_Handler_array[0]->h2i_map.begin(); 
+			Histogram_Handler_array[0]->h2i_map_iterator != Histogram_Handler_array[0]->h2i_map.end();
+			++Histogram_Handler_array[0]->h2i_map_iterator	) {
+
+				output_root_file->add_hist( Histogram_Handler_array[0]->h2i_map_iterator->second );
+	}
 
 
 	input_root_file->close_file();
