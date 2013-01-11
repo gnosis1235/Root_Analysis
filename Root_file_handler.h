@@ -17,6 +17,7 @@
 
 //#include "rootstuff.h"
 #include "event_data.h"
+//
 
 #include <thread>
 #include <mutex>
@@ -36,7 +37,7 @@ using namespace std;
 //class rootstuff;
 struct event_data;
 
-
+class H1i;
 
 class Root_file_handler
 {
@@ -45,6 +46,8 @@ class Root_file_handler
 	TFile * RootFile;
 	//rootstuff * rt;
 	TTree * inputfileRootTree;
+	event_data * single_event;
+	
 	__int64 Total_Events_inputfile ;
 	__int64 current_entry_inputfile;
 	__int64 eventswritten;
@@ -59,16 +62,23 @@ class Root_file_handler
 	TDirectory* getDir(TFile *rootfile, TString dirName);
 	TTree * OpenRootFileGetTree(const char *TreeName);
 	bool FileExists(const char * strFilename);
+	TDirectory * Histograms_dir;
+	TDirectory * Data_dir;
+
 
 public:
 	Root_file_handler(void);//
 	Root_file_handler(std::string filename, std::string Option_read_write);
 	~Root_file_handler(void);
 
-    event_data *	get_next_event();
+    event_data * get_next_event();
 	void NTupleD(const char *name, const char * title, const char *varlist, __int32 buffersize, double *data, const char *  dir = "Data");
 	void EventsWrittenCounter();
 	void write_TNtupleD();
 	void close_file();
+
+	void add_hist(H1i * hist);
+
+
 };
 

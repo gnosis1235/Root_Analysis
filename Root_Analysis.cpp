@@ -54,25 +54,27 @@ void analysis(Root_file_handler * input_root_file, Root_file_handler * output_ro
 		//std::this_thread::sleep_for(sleepDuration);
 		//cout<<std::this_thread::get_id()<<endl;
 
-		//printf("\nreaction=%f, idx=%d, slow=%f\n",single_event->reaction, idx, pow((double)idx,100));
-		//printf("r1x=%f, r1y=%f, r1tof=%f,\n e1x=%f, e1y=%f, e1tof=%f\n", single_event->rx[0], single_event->ry[0], single_event->rtof[0], single_event->ex[0], single_event->ey[0], single_event->etof[0]);
-		//printf("p1x=%f, p1y=%f, p1tof=%f,\n", single_event->px[0], single_event->py[0], single_event->ptof[0]);
-		//printf("r2x=%f, r2y=%f, r2tof=%f,\n e2x=%f, e2y=%f, e2tof=%f\n", single_event->rx[1], single_event->ry[1], single_event->rtof[1], single_event->ex[1], single_event->ey[1], single_event->etof[1]);
-		//printf("p2x=%f, p2y=%f, p2tof=%f,\n", single_event->px[1], single_event->py[1], single_event->ptof[1]);
-		//
+		//printf("\nreaction=%f, idx=%d, slow=%f\n",event->reaction, idx, pow((double)idx,100));
+		//printf("r1x=%f, r1y=%f, r1tof=%f,\n e1x=%f, e1y=%f, e1tof=%f\n", event->rx[0], event->ry[0], event->rtof[0], event->ex[0], event->ey[0], event->etof[0]);
+		//printf("p1x=%f, p1y=%f, p1tof=%f,\n", event->px[0], event->py[0], event->ptof[0]);
+		//printf("r2x=%f, r2y=%f, r2tof=%f,\n e2x=%f, e2y=%f, e2tof=%f\n", event->rx[1], event->ry[1], event->rtof[1], event->ex[1], event->ey[1], event->etof[1]);
+		//printf("p2x=%f, p2y=%f, p2tof=%f,\n", event->px[1], event->py[1], event->ptof[1]);
+		
 		//single_event->reaction = pow((double)idx,1000);
 		
 
-		Hist->fill1("test1", idx,"test title", 100, 0., 100., "testx", "test_dir");
+		//Hist->fill1("test1", idx,"test title", 100, 0., 100., "testx", "test1dir");
 
-		Hist->fill1("test2", idx*2,"test title", 100, 0., 100., "testx", "test_dir");
+		//Hist->fill1("test2", idx*2,"test title", 100, 0., 100., "testx", "test2dir");
 
 		NTupleData[0]=idx;
 		NTupleData[1]=thread_id;
+		NTupleData[2]=event->reaction;
+		NTupleData[3]=event->rx[0];
 
 		WriteNTuple = true;
 		if(WriteNTuple) {
-			output_root_file->NTupleD("Data","test_file","idx:threadID",32000,NTupleData);
+			output_root_file->NTupleD("Data","test_file","idx:threadID:reation:rx",32000,NTupleData);
 			output_root_file->EventsWrittenCounter();
 		}
 		delete event;
@@ -135,13 +137,15 @@ int main(__int32 argc, char* argv[], char* envp[])
 	string outputfilename = "output_test.root";
 	//ProcessRootFile(inputfilename, outputfilename);
 
-		Root_file_handler * input_root_file = new Root_file_handler(inputfilename, "read");
+	Root_file_handler * input_root_file = new Root_file_handler(inputfilename, "read");
 	Root_file_handler * output_root_file = new Root_file_handler(outputfilename, "write");
 	//event_data * single_event ;
 
 
 	histo_handler * Histogram_Handler1 = new histo_handler();
 	histo_handler * Histogram_Handler2 = new histo_handler();
+
+
 	std::thread t1(analysis, input_root_file, output_root_file, 1., Histogram_Handler1);
 	std::thread t2(analysis, input_root_file, output_root_file, 2., Histogram_Handler2);
 	//std::thread t3(analysis, input_root_file);
@@ -191,7 +195,9 @@ int main(__int32 argc, char* argv[], char* envp[])
 	string key = "test1test_dir";
 	//Histogram_Handler1->h1i_map[key]->print_bin_contents();
 	
-	for (	Histogram_Handler2->h1i_map_iterator = Histogram_Handler2->h1i_map.begin(); 
+
+	//combine the historams form each thread
+	for (	Histogram_Handler2->h1i_map_iterator =  Histogram_Handler2->h1i_map.begin(); 
 			Histogram_Handler2->h1i_map_iterator != Histogram_Handler2->h1i_map.end();
 			++Histogram_Handler2->h1i_map_iterator	) {
 
@@ -200,6 +206,14 @@ int main(__int32 argc, char* argv[], char* envp[])
 		Histogram_Handler1->h1i_map[ Histogram_Handler2->h1i_map_iterator->first ]->print_bin_contents();
 	}
 	
+	//write histograms to the root file
+	for (	Histogram_Handler1->h1i_map_iterator =  Histogram_Handler1->h1i_map.begin(); 
+			Histogram_Handler1->h1i_map_iterator != Histogram_Handler1->h1i_map.end();
+			++Histogram_Handler1->h1i_map_iterator	) {
+
+				output_root_file->add_hist( Histogram_Handler1->h1i_map_iterator->second );
+	}
+
 	//unordered_map<string, int> map;
 	//map["test1"]=1;
 	//map["test2"]=2;
