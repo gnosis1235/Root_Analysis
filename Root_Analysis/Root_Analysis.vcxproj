@@ -141,6 +141,7 @@
     </ManifestResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Analysis.cpp" />
     <ClCompile Include="..\console.cpp" />
     <ClCompile Include="..\Root_Analysis.cpp" />
     <ClCompile Include="..\Root_file_handler.cpp" />

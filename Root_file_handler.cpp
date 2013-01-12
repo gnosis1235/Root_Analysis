@@ -35,6 +35,9 @@
 
 using namespace std;
 
+void set_branches(event_data * single_event, TTree * inputfileRootTree);
+
+
 Root_file_handler::Root_file_handler(void)
 {
 	std::lock_guard<std::mutex> guard(mutex); //auto lock thread
@@ -59,7 +62,7 @@ Root_file_handler::Root_file_handler(std::string filename, std::string Option_re
 	TNtupleD_started=false;
 	reading = false;
 	writing = false;
-	
+	stop_reading = false;
 
 	//---------------------------------------------------------
 	// Don't know why these are need, but they are required to get the Ttree without errors.  I think something is wrong with the project settings.  
@@ -87,69 +90,7 @@ Root_file_handler::Root_file_handler(std::string filename, std::string Option_re
 		}
 		else{
 			single_event = new event_data();
-			char ntuple_identifier[500];
-			bool Check = 0;
-
-			inputfileRootTree->SetBranchAddress("reaction",&single_event->reaction);
-			inputfileRootTree->SetBranchAddress("ehit",&single_event->ehit);
-			inputfileRootTree->SetBranchAddress("rhit",&single_event->rhit);
-			inputfileRootTree->SetBranchAddress("phit",&single_event->phit);
-			inputfileRootTree->SetBranchAddress("bunchmarker",&single_event->bunchmarker);
-			
-			// find out how many recoils are in Ntuple
-			int MaxRec = 0;
-			do {
-				sprintf(ntuple_identifier,"r%ix",++MaxRec);
-			} while(inputfileRootTree->GetBranch(ntuple_identifier));
-
-			for(int i=0;i<MaxRec-1;i++) {
-				sprintf(ntuple_identifier,"r%ix",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->rx[i]);
-				sprintf(ntuple_identifier,"r%iy",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->ry[i]);
-				sprintf(ntuple_identifier,"r%imcp",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->rmcp[i]);
-				sprintf(ntuple_identifier,"r%itof",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->rtof[i]);
-				sprintf(ntuple_identifier,"r%iflag",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->rflag[i]);		
-			}
-
-			// find out how many electrons are in Ntuple
-			int MaxElec = 0;
-			do {
-				sprintf(ntuple_identifier,"e%ix",++MaxElec);
-			} while(inputfileRootTree->GetBranch(ntuple_identifier));
-
-			for(int i=0;i<MaxElec-1;i++) {
-				sprintf(ntuple_identifier,"e%ix",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->ex[i]);
-				sprintf(ntuple_identifier,"e%iy",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->ey[i]);
-				sprintf(ntuple_identifier,"e%imcp",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->emcp[i]);
-				sprintf(ntuple_identifier,"e%itof",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->etof[i]);
-				sprintf(ntuple_identifier,"e%iflag",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->eflag[i]);		
-			}
-
-			// find out how many projectyles are in Ntuple
-			int MaxProj = 0;
-			do {
-				sprintf(ntuple_identifier,"p%ix",++MaxProj);
-			} while(inputfileRootTree->GetBranch(ntuple_identifier));
-		
-			for(int i=0;i<MaxProj-1;i++) {
-				sprintf(ntuple_identifier,"p%iy",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->py[i]);
-				sprintf(ntuple_identifier,"p%imcp",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->pmcp[i]);
-				sprintf(ntuple_identifier,"p%itof",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->ptof[i]);
-				sprintf(ntuple_identifier,"p%iflag",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->pflag[i]);		
-			}
+			set_branches(single_event, inputfileRootTree);
 		}
 
 		current_entry_inputfile =0;
@@ -185,6 +126,73 @@ Root_file_handler::Root_file_handler(std::string filename, std::string Option_re
 	return;
 }
 
+
+//void Root_file_handler::set_branches(){
+//			//single_event = new event_data();
+//			char ntuple_identifier[500];
+//			bool Check = 0;
+//
+//			inputfileRootTree->SetBranchAddress("reaction",&single_event->reaction);
+//			inputfileRootTree->SetBranchAddress("ehit",&single_event->ehit);
+//			inputfileRootTree->SetBranchAddress("rhit",&single_event->rhit);
+//			inputfileRootTree->SetBranchAddress("phit",&single_event->phit);
+//			inputfileRootTree->SetBranchAddress("bunchmarker",&single_event->bunchmarker);
+//			
+//			// find out how many recoils are in Ntuple
+//			int MaxRec = 0;
+//			do {
+//				sprintf(ntuple_identifier,"r%ix",++MaxRec);
+//			} while(inputfileRootTree->GetBranch(ntuple_identifier));
+//
+//			for(int i=0;i<MaxRec-1;i++) {
+//				sprintf(ntuple_identifier,"r%ix",i+1);
+//				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->rx[i]);
+//				sprintf(ntuple_identifier,"r%iy",i+1);
+//				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->ry[i]);
+//				sprintf(ntuple_identifier,"r%imcp",i+1);
+//				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->rmcp[i]);
+//				sprintf(ntuple_identifier,"r%itof",i+1);
+//				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->rtof[i]);
+//				sprintf(ntuple_identifier,"r%iflag",i+1);
+//				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->rflag[i]);		
+//			}
+//
+//			// find out how many electrons are in Ntuple
+//			int MaxElec = 0;
+//			do {
+//				sprintf(ntuple_identifier,"e%ix",++MaxElec);
+//			} while(inputfileRootTree->GetBranch(ntuple_identifier));
+//
+//			for(int i=0;i<MaxElec-1;i++) {
+//				sprintf(ntuple_identifier,"e%ix",i+1);
+//				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->ex[i]);
+//				sprintf(ntuple_identifier,"e%iy",i+1);
+//				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->ey[i]);
+//				sprintf(ntuple_identifier,"e%imcp",i+1);
+//				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->emcp[i]);
+//				sprintf(ntuple_identifier,"e%itof",i+1);
+//				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->etof[i]);
+//				sprintf(ntuple_identifier,"e%iflag",i+1);
+//				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->eflag[i]);		
+//			}
+//
+//			// find out how many projectyles are in Ntuple
+//			int MaxProj = 0;
+//			do {
+//				sprintf(ntuple_identifier,"p%ix",++MaxProj);
+//			} while(inputfileRootTree->GetBranch(ntuple_identifier));
+//		
+//			for(int i=0;i<MaxProj-1;i++) {
+//				sprintf(ntuple_identifier,"p%iy",i+1);
+//				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->py[i]);
+//				sprintf(ntuple_identifier,"p%imcp",i+1);
+//				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->pmcp[i]);
+//				sprintf(ntuple_identifier,"p%itof",i+1);
+//				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->ptof[i]);
+//				sprintf(ntuple_identifier,"p%iflag",i+1);
+//				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->pflag[i]);		
+//			}
+//}
 
 Root_file_handler::~Root_file_handler(void)
 {
@@ -266,38 +274,43 @@ event_data * Root_file_handler::get_next_event(){
 		printf("Error:File %s does not appear to be an input file. You cannot call get_next_event on and output file.\n", rootfilename.c_str());
 		return single_event;
 	}
-	//read new row from the NTuple
-	inputfileRootTree->GetEntry(current_entry_inputfile);
-	current_entry_inputfile++;
+	if(current_entry_inputfile <= Total_Events_inputfile){
+		//read new row from the NTuple
+		inputfileRootTree->GetEntry(current_entry_inputfile);
+		current_entry_inputfile++;
 
-	event_data * event = new event_data();
-	//copy data to a disposible event_data (will be deleted when analysis is finsihed)
-	//should change this a memcpy
-	(*event).bunchmarker = (*single_event).bunchmarker;
-	(*event).rhit		= (*single_event).rhit;
-	(*event).ehit		= (*single_event).ehit;
-	(*event).phit		= (*single_event).phit;
-	(*event).reaction	= (*single_event).reaction ;
+		event_data * event = new event_data();
+		//copy data to a disposible event_data (will be deleted when analysis is finsihed)
+		//should change this a memcpy
+		(*event).bunchmarker = (*single_event).bunchmarker;
+		(*event).rhit		= (*single_event).rhit;
+		(*event).ehit		= (*single_event).ehit;
+		(*event).phit		= (*single_event).phit;
+		(*event).reaction	= (*single_event).reaction ;
 	
-	for(int i=0;i<32; ++i)	(*event).rflag[i]		= (*single_event).rflag[i];
-	for(int i=0;i<32; ++i)	(*event).rx[i]			= (*single_event).rx[i]	;
-	for(int i=0;i<32; ++i)	(*event).ry[i]			= (*single_event).ry[i]	;
-	for(int i=0;i<32; ++i)	(*event).rmcp[i]		= (*single_event).rmcp[i];
-	for(int i=0;i<32; ++i)	(*event).rtof[i]		= (*single_event).rtof[i];
+		for(int i=0;i<32; ++i)	(*event).rflag[i]		= (*single_event).rflag[i];
+		for(int i=0;i<32; ++i)	(*event).rx[i]			= (*single_event).rx[i]	;
+		for(int i=0;i<32; ++i)	(*event).ry[i]			= (*single_event).ry[i]	;
+		for(int i=0;i<32; ++i)	(*event).rmcp[i]		= (*single_event).rmcp[i];
+		for(int i=0;i<32; ++i)	(*event).rtof[i]		= (*single_event).rtof[i];
 								  						    
-	for(int i=0;i<32; ++i)	(*event).eflag[i]		= (*single_event).eflag[i];
-	for(int i=0;i<32; ++i)	(*event).ex[i]			= (*single_event).ex[i]	;
-	for(int i=0;i<32; ++i)	(*event).ey[i]			= (*single_event).ey[i]	;
-	for(int i=0;i<32; ++i)	(*event).emcp[i]		= (*single_event).emcp[i];
-	for(int i=0;i<32; ++i)	(*event).etof[i]		= (*single_event).etof[i];
+		for(int i=0;i<32; ++i)	(*event).eflag[i]		= (*single_event).eflag[i];
+		for(int i=0;i<32; ++i)	(*event).ex[i]			= (*single_event).ex[i]	;
+		for(int i=0;i<32; ++i)	(*event).ey[i]			= (*single_event).ey[i]	;
+		for(int i=0;i<32; ++i)	(*event).emcp[i]		= (*single_event).emcp[i];
+		for(int i=0;i<32; ++i)	(*event).etof[i]		= (*single_event).etof[i];
 								  						    
-	for(int i=0;i<32; ++i)	(*event).pflag[i]		= (*single_event).pflag[i];
-	for(int i=0;i<32; ++i)	(*event).px[i]			= (*single_event).px[i]	;
-	for(int i=0;i<32; ++i)	(*event).py[i]			= (*single_event).py[i]	;
-	for(int i=0;i<32; ++i)	(*event).pmcp[i]		= (*single_event).pmcp[i];
-	for(int i=0;i<32; ++i)	(*event).ptof[i]		= (*single_event).ptof[i];
+		for(int i=0;i<32; ++i)	(*event).pflag[i]		= (*single_event).pflag[i];
+		for(int i=0;i<32; ++i)	(*event).px[i]			= (*single_event).px[i]	;
+		for(int i=0;i<32; ++i)	(*event).py[i]			= (*single_event).py[i]	;
+		for(int i=0;i<32; ++i)	(*event).pmcp[i]		= (*single_event).pmcp[i];
+		for(int i=0;i<32; ++i)	(*event).ptof[i]		= (*single_event).ptof[i];
 	
-	return event;
+		return event;
+	}else{
+		stop_reading=true;
+		return single_event;
+	}
 }
 
 
@@ -380,6 +393,7 @@ void Root_file_handler::add_hist(H1i * hist){
 	root_hist->SetBinContent( hist->get_X_n_bins()+1 , hist->get_X_overflow() );
 	//set axis title
 	root_hist->SetXTitle( hist->get_X_title().c_str() );
+	
 
 	//write to root file
 	root_hist->Write(hist->get_name().c_str() );
@@ -407,6 +421,8 @@ void Root_file_handler::add_hist(H2i * hist){
 	//set axis title
 	root_hist->SetXTitle( hist->get_X_title().c_str() );
 	root_hist->SetYTitle( hist->get_Y_title().c_str() );
+
+	root_hist->SetOption("colz");
 	//write to root file
 	root_hist->Write(hist->get_name().c_str() );
 }

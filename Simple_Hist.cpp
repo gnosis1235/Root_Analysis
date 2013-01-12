@@ -233,7 +233,7 @@ void histo_handler::fill2(string NAME, double x, double y, string TITLE, int X_N
 	if(h2i_map.count(NAME+DIR) == 0){
 		H2i * hist = new H2i(NAME, TITLE, X_N_BINS, X_MIN, X_MAX, X_LABEL, Y_N_BINS, Y_MIN, Y_MAX, Y_LABEL, DIR);
 		h2i_map[NAME+DIR]=hist;
-		printf("add new\n");
+		//printf("add new\n");
 	}else{
 		if ( h2i_map[NAME+DIR]->match(NAME, TITLE, X_N_BINS, X_MIN, X_MAX, X_LABEL,  Y_N_BINS, Y_MIN, Y_MAX, Y_LABEL, DIR)){
 			//

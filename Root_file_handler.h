@@ -54,6 +54,7 @@ class Root_file_handler
 	__int64 current_entry_inputfile;
 	__int64 eventswritten;
 
+;
 	bool reading;
 	bool writing;
 
@@ -72,7 +73,8 @@ public:
 	Root_file_handler(void);//
 	Root_file_handler(std::string filename, std::string Option_read_write);
 	~Root_file_handler(void);
-
+	
+	bool stop_reading;
     event_data * get_next_event();
 	void NTupleD(const char *name, const char * title, const char *varlist, __int32 buffersize, double *data, const char *  dir = "Data");
 	void EventsWrittenCounter();
@@ -84,6 +86,6 @@ public:
 
 	inline __int64 get_Total_Events_inputfile(){return Total_Events_inputfile;}
 	inline __int64 get_current_entry_inputfile(){return current_entry_inputfile;}
-
+	//inline bool iswritable(){return MyTNtuple->GetTree()->Is
 };
 

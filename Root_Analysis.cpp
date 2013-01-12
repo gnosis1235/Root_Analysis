@@ -30,6 +30,36 @@
 
 using namespace std;
 
+void analysis(Root_file_handler * input_root_file, Root_file_handler * output_root_file, int thread_id, histo_handler * Hist, __int64 num_events);
+//kbhit get keyboard input
+#ifndef LINUX
+
+	__int32 my_kbhit()
+	{
+		if (!_kbhit()) return 0;
+		return _getch();
+	}
+
+#else
+
+	__int32 my_kbhit(void)
+	{
+		struct termios term, oterm;
+		__int32 fd = 0;
+		__int32 c = 0;
+		tcgetattr(fd, &oterm);
+		memcpy(&term, &oterm, sizeof(term));
+		term.c_lflag = term.c_lflag & (!ICANON);
+		term.c_cc[VMIN] = 0;
+		term.c_cc[VTIME] = 1;
+		tcsetattr(fd, TCSANOW, &term);
+		c = getchar();
+		tcsetattr(fd, TCSANOW, &oterm);
+		return ((c != -1) ? c : 0);
+	}
+
+#endif
+
 
  double string_to_double( const std::string& s )
  {
@@ -41,53 +71,7 @@ using namespace std;
  }
 
 
-void analysis(Root_file_handler * input_root_file, Root_file_handler * output_root_file, int thread_id, histo_handler * Hist, __int64 num_events){
-	
-	
-	double NTupleData[5];
-	bool WriteNTuple = false;
 
-	for(__int64 idx=0;idx<num_events;idx++){
-		event_data * event  = input_root_file->get_next_event();
-		
-		//std::chrono::milliseconds sleepDuration(50);
-		//std::this_thread::sleep_for(sleepDuration);
-		//cout<<std::this_thread::get_id()<<endl;
-
-		//printf("\nreaction=%f, idx=%d, slow=%f\n",event->reaction, idx, pow((double)idx,100));
-		//printf("r1x=%f, r1y=%f, r1tof=%f,\n e1x=%f, e1y=%f, e1tof=%f\n", event->rx[0], event->ry[0], event->rtof[0], event->ex[0], event->ey[0], event->etof[0]);
-		//printf("p1x=%f, p1y=%f, p1tof=%f,\n", event->px[0], event->py[0], event->ptof[0]);
-		//printf("r2x=%f, r2y=%f, r2tof=%f,\n e2x=%f, e2y=%f, e2tof=%f\n", event->rx[1], event->ry[1], event->rtof[1], event->ex[1], event->ey[1], event->etof[1]);
-		//printf("p2x=%f, p2y=%f, p2tof=%f,\n", event->px[1], event->py[1], event->ptof[1]);
-		
-		//single_event->reaction = pow((double)idx,1000);
-		
-		
-		Hist->fill1("test", 5.6,"test title", 1000, 0., 10., "testx", "Histograms");
-		Hist->fill1("test", 15.6,"test title", 1000, 0., 10., "testx", "Histograms");
-
-		Hist->fill1("test1", idx,"test title", 1000, -1., 1000., "testx", "Histograms");
-
-		Hist->fill1("test2", idx*2,"test title", 1000, -1, 1000., "testx", "Histograms");
-
-		Hist->fill2("test1", idx, idx,"test title", 1000, 0., 1000., "testx", 1000, 0., 1000., "testy", "Histograms");
-		Hist->fill2("test2", idx/2., idx/2.,"test title", 1000, 0., 1000., "testx", 1000, 0., 1000., "testy", "Histograms");
-		Hist->fill2("test3", idx/2., idx/2.,"test title", 1000, 0., 100., "testx", 1000, 0., 1000., "testy", "Histograms");
-
-		NTupleData[0]=idx;
-		NTupleData[1]=thread_id;
-		NTupleData[2]=event->reaction;
-		NTupleData[3]=event->rx[0];
-
-		WriteNTuple = true;
-		if(WriteNTuple) {
-			output_root_file->NTupleD("Data","test_file","idx:threadID:reation:rx",32000,NTupleData);
-			output_root_file->EventsWrittenCounter();
-		}
-		delete event;
-	}	
-
-}
 
 //void ProcessRootFile(string inputfilename, string outputfilename){
 //	
@@ -132,41 +116,119 @@ void analysis(Root_file_handler * input_root_file, Root_file_handler * output_ro
 //}
 
 
+ void GUI(Root_file_handler * input_root_file ){
+
+
+	printf("Number of events in file: %.0lf\n", double(input_root_file->get_Total_Events_inputfile()));
+	printf("\n0%%           25%%          50%%          75%%        100%%\n");
+	printf("|------------|------------|------------|-----------|\n");
+	COORD start_COORD= getXY();
+	printf("\n\n\n\n\n");
+	__int64 total_events = input_root_file->get_Total_Events_inputfile();
+	__int64 prev_position=0;
+	__int64 current_position=0;
+	double rate=0;
+	
+	string p_bar;
+
+	double percentage_complete = 0;
+	int num_star =0;
+	__int32 c = 0;
+
+	while(input_root_file->get_current_entry_inputfile() < total_events && !input_root_file->stop_reading){
+		prev_position = input_root_file->get_current_entry_inputfile();
+		
+		//sleep thread for 0.25s
+		std::chrono::milliseconds sleepDuration(750);
+		std::this_thread::sleep_for(sleepDuration);
+
+		current_position =input_root_file->get_current_entry_inputfile();
+		rate = ((double)(current_position - prev_position))/0.75;
+
+		gotoXY(start_COORD.X, start_COORD.Y-5);
+		percentage_complete = (double)current_position / (double)total_events ;
+		num_star = (int)(52. * percentage_complete);
+		p_bar = "*";
+		for(int i=0; i < num_star; ++i){
+			p_bar += "*";
+		}
+		printf("%s \nrate=%G /s							\n", p_bar.c_str(),rate);
+		printf("percentage_complete = %f                \n",percentage_complete);
+		printf("current_position = %I64i                \n",current_position);
+		printf("total_events	 = %I64i                \n",total_events);
+		
+		
+
+		c = my_kbhit();
+		if (c) {
+			while (my_kbhit());
+			if(c=='q') {printf("\nq was pressed -> skipping all file. \n"); input_root_file->stop_reading = true;}
+			if(c=='Q') {printf("\nQ was pressed -> skipping all files.\n"); input_root_file->stop_reading = true;}
+		}
+
+	}
+ }
 
 int main(__int32 argc, char* argv[], char* envp[])
 {
+	#ifdef _DEBUG
+		Red(true);
+		printf("\n***********************\n    SLOW DEBUG VERSION !\n***********************\n");
+		Red(false);
+	#endif
+
+	printf("RAM (Root Analysis Multi-cor");
+
 	Red(true);
 	printf("Don't panic! Everything will be fine.\n");
 	White(false);
 
 	int number_of_threads=1;
 
-	string inputfilename = "test.root";
+	string inputfilename = "CH4_295_5eV_presorted_2.root";
 	string outputfilename = "output_test.root";
 	//ProcessRootFile(inputfilename, outputfilename);
 
+	//start input and output file handlers
 	Root_file_handler * input_root_file = new Root_file_handler(inputfilename, "read");
 	Root_file_handler * output_root_file = new Root_file_handler(outputfilename, "write");
+	
+	//if( output_root_file->iswritable()){
+	//	Red(true);
+	//	printf("\nCannot write to %s\nPerhaps it is still open.\nExiting\n", outputfilename.c_str());
+	//	White(false);
+	//	return 0;
+	//}
 	//event_data * single_event ;
 
-
+	//Start the histogram_handlers (one for each thread)
 	histo_handler * Histogram_Handler_array[8];
 	for(int i=0; i<number_of_threads;++i){
 		Histogram_Handler_array[i]= new histo_handler();
 	}
-
-	__int64 num_events_per_thread = input_root_file->get_Total_Events_inputfile()/((__int64)number_of_threads) -1; 
+	
+	//roughly find how many events per thread
+	__int64 num_events_per_thread = input_root_file->get_Total_Events_inputfile()/((__int64)number_of_threads) ; 
+	//find the left overs
+	__int64 extras = input_root_file->get_Total_Events_inputfile() - (num_events_per_thread * number_of_threads);
+	
+	
 	//lanuch threads
 	std::vector<std::thread> threads;
-	for(int i = 0; i < number_of_threads; ++i){
+	//start thread 0 (this one has the extra event)
+	threads.push_back(std::thread(analysis, input_root_file, output_root_file, 0, Histogram_Handler_array[0], num_events_per_thread + extras));
+	//start the rest of the threads 
+	for(int i = 1; i < number_of_threads; ++i){
 		threads.push_back(std::thread(analysis, input_root_file, output_root_file, i, Histogram_Handler_array[i], num_events_per_thread));
 	}
-
+	std::thread so_called_gui(GUI, input_root_file);
+	
+	
 	for(auto& thread : threads){
 		thread.join();
 	}
-
-
+	
+	so_called_gui.join();
 	//std::thread t1(analysis, input_root_file, output_root_file, 1., Histogram_Handler_array[0], num_events_per_thread);
 	//std::thread t2(analysis, input_root_file, output_root_file, 2., Histogram_Handler_array[1], num_events_per_thread);
 	//std::thread t3(analysis, input_root_file, output_root_file, 3., Histogram_Handler_array[2], num_events_per_thread);
@@ -193,10 +255,11 @@ int main(__int32 argc, char* argv[], char* envp[])
 	
 	
 	
-
+	input_root_file->close_file();
 	//combine the historams form each thread
 	// iterate over the Histogram_Handler_array
 	// store the results in Histogram_Handler_array[0]
+	printf("Combining histgrams from each thread ...\n");
 	for(int i=0; i<number_of_threads;++i){
 		//the 1d histograms
 		for (	Histogram_Handler_array[i]->h1i_map_iterator =  Histogram_Handler_array[i]->h1i_map.begin(); 
@@ -236,7 +299,7 @@ int main(__int32 argc, char* argv[], char* envp[])
 	}
 
 
-	input_root_file->close_file();
+
 	output_root_file->write_TNtupleD();
 	output_root_file->close_file();
 

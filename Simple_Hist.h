@@ -143,10 +143,17 @@ public:
 	unordered_map<string, H1i*> h1i_map;
 	unordered_map<string, H1i*>::iterator h1i_map_iterator;
 	void fill1(string NAME, double x, string TITLE, int N_BINS, double MIN, double MAX, string X_LABEL, string DIR);
+	inline void fill1(int UNUSED_id,string NAME, double x, double UNUSED_weight, string TITLE, int N_BINS, double MIN, double MAX, string X_LABEL, string DIR){
+		fill1(NAME,  x,  TITLE,  N_BINS,  MIN,  MAX,  X_LABEL,  DIR);
+	}
+	
 	void combine_hist(H1i * hist2);
 
 	unordered_map<string, H2i*> h2i_map;
 	unordered_map<string, H2i*>::iterator h2i_map_iterator;
 	void fill2(string NAME, double x, double y, string TITLE, int X_N_BINS, double X_MIN, double X_MAX, string X_LABEL, int Y_N_BINS, double Y_MIN, double Y_MAX, string Y_LABEL, string DIR);
+	inline void fill2(int UNUSED_id, string NAME, double x, double y, double UNUSED_weight, string TITLE, int X_N_BINS, double X_MIN, double X_MAX, string X_LABEL, int Y_N_BINS, double Y_MIN, double Y_MAX, string Y_LABEL, string DIR){
+		fill2( NAME,  x,  y,  TITLE,  X_N_BINS,  X_MIN,  X_MAX,  X_LABEL,  Y_N_BINS,  Y_MIN,  Y_MAX,  Y_LABEL,  DIR);
+	}
 	void combine_hist(H2i * hist2);
 };
