@@ -177,7 +177,8 @@ int main(__int32 argc, char* argv[], char* envp[])
 		Red(false);
 	#endif
 
-	printf("RAM (Root Analysis Multi-cor");
+	printf("\nCRAP (Coltrims Root Analysis Program).\n");
+	printf("Verison 0.5\n");
 
 	Red(true);
 	printf("Don't panic! Everything will be fine.\n");
