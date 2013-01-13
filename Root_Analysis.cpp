@@ -33,7 +33,8 @@
 using namespace std;
 bool stop_reading_input_files = false;
 
-void analysis(Root_file_handler * input_root_file, Root_file_handler * output_root_file, int thread_id, histo_handler * Hist, __int64 num_events);
+void analysis(Root_file_handler * input_root_file, Root_file_handler * output_root_file, histo_handler * Hist, config_file_reader * config_file, __int64 num_events);
+
 //kbhit get keyboard input
 #ifndef LINUX
 
@@ -64,14 +65,6 @@ void analysis(Root_file_handler * input_root_file, Root_file_handler * output_ro
 #endif
 
 
- double string_to_double( const std::string& s )
- {
-   std::istringstream i(s);
-   double x;
-   if (!(i >> x))
-     return 0;
-   return x;
- }
 
  
 /////////////////////////////////////////////////////////////////////////////
@@ -228,28 +221,23 @@ int main(__int32 argc, char* argv[], char* envp[])
 	printf("\n***********************\n    SLOW DEBUG VERSION !\n***********************\n");
 	Red(false);
 #endif
-	string logol1 =	" __              __   ";
-	string logol2 = "|__)   /\\  |\\/| |__)  ";
-	string logol3 = "|  \\  /--\\ |  | |    ";
-	//cout << logol1 << endl;
-	//cout << logol2 << endl;
-	//cout << logol3 << endl;  
+
 	
 	Green(true);
-	printf(" *******       **     ****     **** ******* \n /**////**     ****   /**/**   **/**/**////** \n /**   /**    **//**  /**//** ** /**/**   /** \n /*******    **  //** /** //***  /**/******* \n /**///**   **********/**  //*   /**/**////  \n /**  //** /**//////**/**   /    /**/**      \n /**   //**/**     /**/**        /**/**       \n //     // //      // //         // //       ");
+	printf("  *******       **     ****     **** ******* \n /**////**     ****   /**/**   **/**/**////** \n /**   /**    **//**  /**//** ** /**/**   /** \n /*******    **  //** /** //***  /**/******* \n /**///**   **********/**  //*   /**/**////  \n /**  //** /**//////**/**   /    /**/**      \n /**   //**/**     /**/**        /**/**       \n //     // //      // //         // //       ");
 	cout << endl;
-
+	White(true);
 	//printf("\nCRAP (Coltrims Root Analysis Program).\n");
 	printf("\n   (Root Analysis Multi-threaded Program)\n");
 	//printf("\nFACER (Frankfurt Analysis Coltrims Events in Root).\n");
-	White(false);	
+	
 	printf("Verison 0.75\n");
 	printf("By Joshua Williams");
 	printf(", Achim Czasch");
 	printf(", Till Jahnke");
-	printf(", Markus Schoeffler");
-	printf(", and ROOT\n");
-
+	printf(", Markus Schoeffler\n");
+	//printf(", and ROOT\n");
+	White(false);
 	Red(true);
 	printf("Don't panic! Everything will be fine.\n");
 	White(false);
@@ -345,13 +333,13 @@ int main(__int32 argc, char* argv[], char* envp[])
 			//find the left overs
 			extras = input_root_file_vector[j]->get_Total_Events_inputfile() - (num_events_per_thread * number_of_threads);
 	
-	
+			
 			//lanuch threads
 			//start thread 0 (this one has the extra event)
-			threads.push_back(std::thread(analysis, input_root_file_vector[j], output_root_file, 0, Histogram_Handler_vector[0], num_events_per_thread + extras));
+			threads.push_back(std::thread(analysis, input_root_file_vector[j], output_root_file, Histogram_Handler_vector[0], config_file, num_events_per_thread + extras));
 			//start the rest of the threads 
 			for(int i = 1; i < number_of_threads; ++i){
-				threads.push_back(std::thread(analysis, input_root_file_vector[j], output_root_file, i, Histogram_Handler_vector[i], num_events_per_thread));
+				threads.push_back(std::thread(analysis, input_root_file_vector[j], output_root_file,  Histogram_Handler_vector[i], config_file, num_events_per_thread));
 			}
 			std::thread so_called_gui(GUI, input_root_file_vector[j]);
 	

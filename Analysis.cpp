@@ -2,6 +2,7 @@
 #include "Root_file_handler.h"
 #include "console.h"
 #include "Simple_Hist.h"
+#include "config_file_reader.h"
 
 
 void set_branches(event_data * single_event, TTree * inputfileRootTree){
@@ -102,12 +103,15 @@ void set_branches(event_data * single_event, TTree * inputfileRootTree){
 }
 
 
-void analysis(Root_file_handler * input_root_file, Root_file_handler * output_root_file, int thread_id, histo_handler * Hist, __int64 num_events){
+void analysis(Root_file_handler * input_root_file, Root_file_handler * output_root_file, histo_handler * Hist, config_file_reader * config_file, __int64 num_events){
 	
-	
+	unordered_map<int, double> parameter = config_file->parameter;
+	vector<command> config_commands = config_file->config_commands;
+
+
 	double NTupleData[5];
 	bool WriteNTuple = false;
-
+	cout << parameter[1000] << endl;
 	for(__int64 idx=0;idx<num_events;idx++){
 
 		event_data * event  = input_root_file->get_next_event();
@@ -179,7 +183,7 @@ void analysis(Root_file_handler * input_root_file, Root_file_handler * output_ro
 
 
 		NTupleData[0]=idx;
-		NTupleData[1]=thread_id;
+		//NTupleData[1]=thread_id;
 		NTupleData[2]=event->reaction;
 		NTupleData[3]=event->rx[0];
 

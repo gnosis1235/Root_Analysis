@@ -89,6 +89,42 @@ config_file_reader::config_file_reader(string filename){
 
 				}
 
+		/////////////////////////////////// insert presorter commands here /////////////////////////////////////////////////
+				string new_presorter="new_presorter";
+				size_t found_new_presorter;
+				found_new_presorter = line.find(new_presorter); //try to find "new_presorter"
+				if (found_new_presorter!=string::npos){
+
+					line = line.erase(found_new_presorter, new_presorter.size()); // erase the "new_presorter"
+					command temp_command;		// create temp commad object 
+					string presorter;									
+					size_t found_presorter;
+					int num_arg = 0;
+					double temp_arg = 0;
+					
+					
+					//ELECTRONTOF
+					presorter ="ELECTRONTOF";
+					num_arg = 3;
+					found_presorter = line.find(presorter);				//try to find "ELECTRONTOF"
+					if (found_presorter!=string::npos){					//if found do something
+						temp_command.command_str=presorter;				// store which command string was found
+						line = line.erase(found_presorter, presorter.size()); // erase the "ELECTRONTOF"
+						
+						stringstream line_stream(line);
+
+						for(int i=0; i < num_arg; ++i){
+							line_stream >> temp_arg;				// get the number from the string
+							temp_command.arg.push_back(temp_arg);				// store the argument for ELECTRONTOF in the arguments vector
+						}
+						
+						config_commands.push_back(temp_command);		// store the eTOF command object in the a vector. 
+						cout << "Persorter found: " <<config_commands[0].command_str <<" "<< config_commands[0].arg[0] <<" "<< config_commands[0].arg[1] <<" "<< config_commands[0].arg[2] << endl;
+					}
+
+				}
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+				
 				else{
 					//look for readROOTfile
 					found_rroot = line.find(read_root);
