@@ -9,11 +9,20 @@ void set_branches(event_data * single_event, TTree * inputfileRootTree){
 			char ntuple_identifier[500];
 			bool Check = 0;
 
-			inputfileRootTree->SetBranchAddress("reaction",&single_event->reaction);
-			inputfileRootTree->SetBranchAddress("ehit",&single_event->ehit);
-			inputfileRootTree->SetBranchAddress("rhit",&single_event->rhit);
-			inputfileRootTree->SetBranchAddress("phit",&single_event->phit);
-			inputfileRootTree->SetBranchAddress("bunchmarker",&single_event->bunchmarker);
+			if(inputfileRootTree->GetBranch("reaction"))
+				inputfileRootTree->SetBranchAddress("reaction",&single_event->reaction);
+			
+			if(inputfileRootTree->GetBranch("ehit"))
+				inputfileRootTree->SetBranchAddress("ehit",&single_event->ehit);
+			
+			if(inputfileRootTree->GetBranch("rhit"))
+				inputfileRootTree->SetBranchAddress("rhit",&single_event->rhit);
+			
+			if(inputfileRootTree->GetBranch("phit"))
+				inputfileRootTree->SetBranchAddress("phit",&single_event->phit);
+			
+			if(inputfileRootTree->GetBranch("bunchmarker"))
+				inputfileRootTree->SetBranchAddress("bunchmarker",&single_event->bunchmarker);
 			
 			// find out how many recoils are in Ntuple
 			int MaxRec = 0;
@@ -23,15 +32,24 @@ void set_branches(event_data * single_event, TTree * inputfileRootTree){
 
 			for(int i=0;i<MaxRec-1;i++) {
 				sprintf(ntuple_identifier,"r%ix",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->rx[i]);
+				if(inputfileRootTree->GetBranch(ntuple_identifier))
+					inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->rx[i]);
+				
 				sprintf(ntuple_identifier,"r%iy",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->ry[i]);
+				if(inputfileRootTree->GetBranch(ntuple_identifier))
+					inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->ry[i]);
+				
 				sprintf(ntuple_identifier,"r%imcp",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->rmcp[i]);
+				if(inputfileRootTree->GetBranch(ntuple_identifier))
+					inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->rmcp[i]);
+				
 				sprintf(ntuple_identifier,"r%itof",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->rtof[i]);
+				if(inputfileRootTree->GetBranch(ntuple_identifier))
+					inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->rtof[i]);
+				
 				sprintf(ntuple_identifier,"r%iflag",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->rflag[i]);		
+				if(inputfileRootTree->GetBranch(ntuple_identifier))
+					inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->rflag[i]);		
 			}
 
 			// find out how many electrons are in Ntuple
@@ -42,15 +60,20 @@ void set_branches(event_data * single_event, TTree * inputfileRootTree){
 
 			for(int i=0;i<MaxElec-1;i++) {
 				sprintf(ntuple_identifier,"e%ix",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->ex[i]);
+				if(inputfileRootTree->GetBranch(ntuple_identifier))
+					inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->ex[i]);
 				sprintf(ntuple_identifier,"e%iy",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->ey[i]);
+				if(inputfileRootTree->GetBranch(ntuple_identifier))
+					inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->ey[i]);
 				sprintf(ntuple_identifier,"e%imcp",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->emcp[i]);
+				if(inputfileRootTree->GetBranch(ntuple_identifier))
+					inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->emcp[i]);
 				sprintf(ntuple_identifier,"e%itof",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->etof[i]);
+				if(inputfileRootTree->GetBranch(ntuple_identifier))
+					inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->etof[i]);
 				sprintf(ntuple_identifier,"e%iflag",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->eflag[i]);		
+				if(inputfileRootTree->GetBranch(ntuple_identifier))
+					inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->eflag[i]);		
 			}
 
 			// find out how many projectyles are in Ntuple
@@ -61,13 +84,20 @@ void set_branches(event_data * single_event, TTree * inputfileRootTree){
 		
 			for(int i=0;i<MaxProj-1;i++) {
 				sprintf(ntuple_identifier,"p%iy",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->py[i]);
+				if(inputfileRootTree->GetBranch(ntuple_identifier))
+					inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->py[i]);
+				
 				sprintf(ntuple_identifier,"p%imcp",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->pmcp[i]);
+				if(inputfileRootTree->GetBranch(ntuple_identifier))
+					inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->pmcp[i]);
+				
 				sprintf(ntuple_identifier,"p%itof",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->ptof[i]);
+				if(inputfileRootTree->GetBranch(ntuple_identifier))
+					inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->ptof[i]);
+				
 				sprintf(ntuple_identifier,"p%iflag",i+1);
-				inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->pflag[i]);		
+				if(inputfileRootTree->GetBranch(ntuple_identifier))
+					inputfileRootTree->SetBranchAddress(ntuple_identifier,&single_event->pflag[i]);		
 			}
 }
 

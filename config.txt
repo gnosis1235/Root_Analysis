@@ -1,0 +1,19 @@
+parameter 1000 	8		;number of threads (0=1)
+
+
+
+//readROOTfile "C:\CH4\CH4_ALS_Aug2010\CH4_Aug-2010\Analysis\CH4_293eV\CH4_293eV_analysis_presorted_MFPADs.root";
+readROOTfile "C:\CH4\CH4_ALS_Aug2010\CH4_Aug-2010\Analysis\CH4_293eV\CH4_293eV_analysis_presorted.root";
+/*
+readROOTfile "C:\CH4\CH4_ALS_Aug2010\CH4_Aug-2010\Analysis\CH4_293eV\CH4_293eV_analysis_preot";
+readROOTfile "C:\CH4\CH4_ALS_Aug2010\CH4_Aug-2010\Analysis\CH4_293eV\CH4_293eV_analysis_presortedt";
+readROOTfile "C:\CH4\CH4_ALS_Aug2010\CH4_Aug-2010\Analysis\CH4_293eV\CH4_293eV_analysis_presot";
+readROOTfile "C:\CH4\CH4_ALS_Aug2010\CH4_Aug-2010\Analysis\CH4_293eV\CH4_293eV_analysis_presort";
+readROOTfile "C:\CH4\CH4_ALS_Aug2010\CH4_Aug-2010\Analysis\CH4_293eV\CH4_293eV_analysis_presorted_M";
+readROOTfile "C:\CH4\CH4_ALS_Aug2010\CH4_Aug-2010\Analysis\CH4_293eV\CH4_293eV_analysis_presorted_";
+readROOTfile "C:\CH4\CH4_ALS_Aug2010\CH4_Aug-2010\Analysis\CH4_293eV\CH4_293eV_analysis_presorted_MFP";
+*/
+
+
+
+set_root_output_file_name "root_output_file";

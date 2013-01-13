@@ -20,13 +20,15 @@
 #include "Root_file_handler.h"
 #include "console.h"
 #include "Simple_Hist.h"
+//#include "config_file_parser.h"
+#include "config_file_reader.h"
 
 #include <thread>
 #include <mutex>
 #include <math.h>
 #include <unordered_map> 
-
- #include <sstream> //for string_to_double
+#include <sys/stat.h> //needed for FileExists
+#include <sstream> //for string_to_double
 
 using namespace std;
 
@@ -70,7 +72,39 @@ void analysis(Root_file_handler * input_root_file, Root_file_handler * output_ro
    return x;
  }
 
+ 
+/////////////////////////////////////////////////////////////////////////////
+bool FileExists(const char * strFilename) {
+/////////////////////////////////////////////////////////////////////////////
+	#ifdef LINUX
 
+		if ( access(strFilename,F_OK) )
+			return(false);
+		else if ( access(strFilename,R_OK) ) {
+			return(false);
+		} else	return(true);
+
+	#else
+
+		FILE * fi;
+		fi = fopen(strFilename,"rb");
+		if (!fi) return false;
+		if (ferror(fi)) {
+			clearerr(fi); fclose(fi);	fi = 0;
+			return false;
+		}
+		char dummy_char;
+		fread(&dummy_char,1,1,fi);
+		if (ferror(fi)) {
+			clearerr(fi); fclose(fi);	fi = 0;			
+			return false;
+		}
+		if (fi) {
+			fclose(fi);	fi = 0;
+		}
+		return true;
+	#endif
+}
 
 
 //void ProcessRootFile(string inputfilename, string outputfilename){
@@ -147,7 +181,7 @@ void analysis(Root_file_handler * input_root_file, Root_file_handler * output_ro
 
 		gotoXY(start_COORD.X, start_COORD.Y-5);
 		percentage_complete = (double)current_position / (double)total_events ;
-		num_star = (int)(52. * percentage_complete);
+		num_star = (int)(51. * percentage_complete);
 		p_bar = "*";
 		for(int i=0; i < num_star; ++i){
 			p_bar += "*";
@@ -169,6 +203,10 @@ void analysis(Root_file_handler * input_root_file, Root_file_handler * output_ro
 	}
  }
 
+
+
+
+
 int main(__int32 argc, char* argv[], char* envp[])
 {
 	#ifdef _DEBUG
@@ -176,127 +214,155 @@ int main(__int32 argc, char* argv[], char* envp[])
 		printf("\n***********************\n    SLOW DEBUG VERSION !\n***********************\n");
 		Red(false);
 	#endif
-
+	Green(true);
 	printf("\nCRAP (Coltrims Root Analysis Program).\n");
+	White(false);	
 	printf("Verison 0.5\n");
 
 	Red(true);
 	printf("Don't panic! Everything will be fine.\n");
 	White(false);
 
-	int number_of_threads=1;
 
-	string inputfilename = "CH4_295_5eV_presorted_2.root";
-	string outputfilename = "output_test.root";
-	//ProcessRootFile(inputfilename, outputfilename);
 
-	//start input and output file handlers
-	Root_file_handler * input_root_file = new Root_file_handler(inputfilename, "read");
+	config_file_reader * config_file;// = new config_file_reader("config.txt");
+
+	//////////////////////////////// read config file //////////////////////////////////////////
+
+	FILE * ascii_file = 0;
+	if (argc>1) {
+		if (!strcmp(argv[1],"help") || !strcmp(argv[1],"-help")) {
+		}
+		else{
+			ascii_file = fopen(argv[1],"rt");
+			if (!ascii_file || !FileExists(argv[1])) {
+				printf("Error:Problem with config file.");
+			}
+			else if (ascii_file) {
+				fclose(ascii_file); 
+				ascii_file = 0;
+			}
+				config_file = new config_file_reader(argv[1]);
+		}
+	}else {
+		cout << "Please give a config file" << endl;
+		return 0;
+	}
+	///////////////////////////// end read config file /////////////////////////////////////////
+	//roughly find how many events per thread
+	__int64 num_events_per_thread;
+	__int64 extras;
+	Root_file_handler * input_root_file ;
+	std::vector<std::thread> threads;
+
+	//start output file handlers
+	string outputfilename = config_file->outputfilename;
 	Root_file_handler * output_root_file = new Root_file_handler(outputfilename, "write");
-	
-	//if( output_root_file->iswritable()){
-	//	Red(true);
-	//	printf("\nCannot write to %s\nPerhaps it is still open.\nExiting\n", outputfilename.c_str());
-	//	White(false);
-	//	return 0;
-	//}
-	//event_data * single_event ;
+	if ( output_root_file->IsZombie()){
+		cout << "Error opening the output root files"<< endl;
+		return 0;
+	}
+
+	double temp_test = config_file->parameter[1001];
+	cout << "temp_test " << temp_test << endl;
+	//set the number of theads
+	int number_of_threads=(int) config_file->parameter[1000];
 
 	//Start the histogram_handlers (one for each thread)
-	histo_handler * Histogram_Handler_array[8];
-	for(int i=0; i<number_of_threads;++i){
-		Histogram_Handler_array[i]= new histo_handler();
+	std::vector<histo_handler*> Histogram_Handler_vector;
+	histo_handler * temp;
+	for(int i = 0; i < number_of_threads; ++i){
+		temp= new histo_handler();
+		Histogram_Handler_vector.push_back(temp);
 	}
-	
-	//roughly find how many events per thread
-	__int64 num_events_per_thread = input_root_file->get_Total_Events_inputfile()/((__int64)number_of_threads) ; 
-	//find the left overs
-	__int64 extras = input_root_file->get_Total_Events_inputfile() - (num_events_per_thread * number_of_threads);
-	
-	
-	//lanuch threads
-	std::vector<std::thread> threads;
-	//start thread 0 (this one has the extra event)
-	threads.push_back(std::thread(analysis, input_root_file, output_root_file, 0, Histogram_Handler_array[0], num_events_per_thread + extras));
-	//start the rest of the threads 
-	for(int i = 1; i < number_of_threads; ++i){
-		threads.push_back(std::thread(analysis, input_root_file, output_root_file, i, Histogram_Handler_array[i], num_events_per_thread));
-	}
-	std::thread so_called_gui(GUI, input_root_file);
-	
-	
-	for(auto& thread : threads){
-		thread.join();
-	}
-	
-	so_called_gui.join();
-	//std::thread t1(analysis, input_root_file, output_root_file, 1., Histogram_Handler_array[0], num_events_per_thread);
-	//std::thread t2(analysis, input_root_file, output_root_file, 2., Histogram_Handler_array[1], num_events_per_thread);
-	//std::thread t3(analysis, input_root_file, output_root_file, 3., Histogram_Handler_array[2], num_events_per_thread);
-	//std::thread t4(analysis, input_root_file, output_root_file, 4., Histogram_Handler_array[3], num_events_per_thread);
-	//std::thread t5(analysis, input_root_file, output_root_file, 5., Histogram_Handler_array[4], num_events_per_thread);
-	//std::thread t6(analysis, input_root_file, output_root_file, 6., Histogram_Handler_array[5], num_events_per_thread);
-	//std::thread t7(analysis, input_root_file, output_root_file, 7., Histogram_Handler_array[6], num_events_per_thread);
-	//std::thread t8(analysis, input_root_file, output_root_file, 8., Histogram_Handler_array[7], num_events_per_thread);	
-	////analysis( input_root_file, output_root_file, 1);
 
-	//t1.join();
-	//t2.join();
-	//t3.join();
-	//t4.join();
-	//t5.join();
-	//t6.join();
-	//t7.join();
-	//t8.join();
+	//loop over all of the input files
+	for(int i=0; i < (int)config_file->inputfilename.size(); ++i){
 	
-	//H1i * hist1 = new H1i("test1", "test title", 100, 0., 10., "testx", "test_dir");
-	//H1i * hist1 = new H1i("test1", "test title", 100, 0., 10., "testx", "test_dir");
-	//H1i * hist2 = new H1i("test1", "test title", 100, 0., 10., "testx", "test_dir");
-	//hist1->print_bin_contents();
+		if( !FileExists( config_file->inputfilename[i].c_str() ) ){
+			cout << "File does not exist. Skipping file." << endl;
+			continue; //skip the rest of the loop and return to the begin of the loop 
+		}
+
+
+		//start input file handlers
+		input_root_file = new Root_file_handler(config_file->inputfilename[i], "read");
+		if (input_root_file->IsZombie() ){
+			cout << "Error opening the input root files"<< endl;
+			return 0;
+		}
+
+
+
+	
+		//roughly find how many events per thread
+		num_events_per_thread = input_root_file->get_Total_Events_inputfile()/((__int64)number_of_threads) ; 
+		//find the left overs
+		extras = input_root_file->get_Total_Events_inputfile() - (num_events_per_thread * number_of_threads);
 	
 	
+		//lanuch threads
+		//start thread 0 (this one has the extra event)
+		threads.push_back(std::thread(analysis, input_root_file, output_root_file, 0, Histogram_Handler_vector[0], num_events_per_thread + extras));
+		//start the rest of the threads 
+		for(int i = 1; i < number_of_threads; ++i){
+			threads.push_back(std::thread(analysis, input_root_file, output_root_file, i, Histogram_Handler_vector[i], num_events_per_thread));
+		}
+		std::thread so_called_gui(GUI, input_root_file);
 	
-	input_root_file->close_file();
+	
+		for(auto& thread : threads){
+			thread.join();
+		}
+	
+		so_called_gui.join();
+	
+	
+		input_root_file->close_file();
+
+	}
+
+	cout<<endl;
 	//combine the historams form each thread
-	// iterate over the Histogram_Handler_array
-	// store the results in Histogram_Handler_array[0]
+	// iterate over the Histogram_Handler_vector
+	// store the results in Histogram_Handler_vector[0]
 	printf("Combining histgrams from each thread ...\n");
 	for(int i=0; i<number_of_threads;++i){
 		//the 1d histograms
-		for (	Histogram_Handler_array[i]->h1i_map_iterator =  Histogram_Handler_array[i]->h1i_map.begin(); 
-				Histogram_Handler_array[i]->h1i_map_iterator != Histogram_Handler_array[i]->h1i_map.end();
-				++Histogram_Handler_array[i]->h1i_map_iterator	) {
+		for (	Histogram_Handler_vector[i]->h1i_map_iterator =  Histogram_Handler_vector[i]->h1i_map.begin(); 
+				Histogram_Handler_vector[i]->h1i_map_iterator != Histogram_Handler_vector[i]->h1i_map.end();
+				++Histogram_Handler_vector[i]->h1i_map_iterator	) {
 
 			//Histogram_Handler1->h1i_map[ Histogram_Handler2->h1i_map_iterator->first ]->print_bin_contents();
-			Histogram_Handler_array[0]->combine_hist(Histogram_Handler_array[i]->h1i_map_iterator->second );
+			Histogram_Handler_vector[0]->combine_hist(Histogram_Handler_vector[i]->h1i_map_iterator->second );
 			//Histogram_Handler1->h1i_map[ Histogram_Handler2->h1i_map_iterator->first ]->print_bin_contents();
 		}
 		//the 2d histograms
-		for (	Histogram_Handler_array[i]->h2i_map_iterator =  Histogram_Handler_array[i]->h2i_map.begin(); 
-				Histogram_Handler_array[i]->h2i_map_iterator != Histogram_Handler_array[i]->h2i_map.end();
-				++Histogram_Handler_array[i]->h2i_map_iterator	) {
+		for (	Histogram_Handler_vector[i]->h2i_map_iterator =  Histogram_Handler_vector[i]->h2i_map.begin(); 
+				Histogram_Handler_vector[i]->h2i_map_iterator != Histogram_Handler_vector[i]->h2i_map.end();
+				++Histogram_Handler_vector[i]->h2i_map_iterator	) {
 
 			//Histogram_Handler1->h2i_map[ Histogram_Handler2->h2i_map_iterator->first ]->print_bin_contents();
-			Histogram_Handler_array[0]->combine_hist(Histogram_Handler_array[i]->h2i_map_iterator->second );
+			Histogram_Handler_vector[0]->combine_hist(Histogram_Handler_vector[i]->h2i_map_iterator->second );
 			//Histogram_Handler1->h2i_map[ Histogram_Handler2->h2i_map_iterator->first ]->print_bin_contents();
 		}
 	}
 
 
 	//write 1D histograms to the root file
-	for (	Histogram_Handler_array[0]->h1i_map_iterator =  Histogram_Handler_array[0]->h1i_map.begin(); 
-			Histogram_Handler_array[0]->h1i_map_iterator != Histogram_Handler_array[0]->h1i_map.end();
-			++Histogram_Handler_array[0]->h1i_map_iterator	) {
+	for (	Histogram_Handler_vector[0]->h1i_map_iterator =  Histogram_Handler_vector[0]->h1i_map.begin(); 
+			Histogram_Handler_vector[0]->h1i_map_iterator != Histogram_Handler_vector[0]->h1i_map.end();
+			++Histogram_Handler_vector[0]->h1i_map_iterator	) {
 
-				output_root_file->add_hist( Histogram_Handler_array[0]->h1i_map_iterator->second );
+				output_root_file->add_hist( Histogram_Handler_vector[0]->h1i_map_iterator->second );
 	}
 
 	//write 2D histograms to the root file
-	for (	Histogram_Handler_array[0]->h2i_map_iterator =  Histogram_Handler_array[0]->h2i_map.begin(); 
-			Histogram_Handler_array[0]->h2i_map_iterator != Histogram_Handler_array[0]->h2i_map.end();
-			++Histogram_Handler_array[0]->h2i_map_iterator	) {
+	for (	Histogram_Handler_vector[0]->h2i_map_iterator =  Histogram_Handler_vector[0]->h2i_map.begin(); 
+			Histogram_Handler_vector[0]->h2i_map_iterator != Histogram_Handler_vector[0]->h2i_map.end();
+			++Histogram_Handler_vector[0]->h2i_map_iterator	) {
 
-				output_root_file->add_hist( Histogram_Handler_array[0]->h2i_map_iterator->second );
+				output_root_file->add_hist( Histogram_Handler_vector[0]->h2i_map_iterator->second );
 	}
 
 

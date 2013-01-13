@@ -142,12 +142,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Analysis.cpp" />
+    <ClCompile Include="..\config_file_reader.cpp" />
     <ClCompile Include="..\console.cpp" />
     <ClCompile Include="..\Root_Analysis.cpp" />
     <ClCompile Include="..\Root_file_handler.cpp" />
     <ClCompile Include="..\Simple_Hist.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\config_file_reader.h" />
     <ClInclude Include="..\Console.h" />
     <ClInclude Include="..\event_data.h" />
     <ClInclude Include="..\Root_file_handler.h" />

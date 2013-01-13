@@ -16,7 +16,7 @@
 //#include "TBrowser.h"
 //#include "TNtuple.h"
 
-#include <sys/stat.h> 
+#include <sys/stat.h> //needed for FileExists
 #include <io.h>
 #include <iostream>
 
@@ -329,9 +329,7 @@ void Root_file_handler::NTupleD( const char *name, const char * title, const cha
 	if(!TNtupleD_started){
 
 		MyTNtuple = new TNtupleD(name,title,varlist,buffersize);
-		
-		//MyTNtuple->SetDirectory(getDir(RootFile,"Data")); //put it in the wanted directory
-		//printf("here");
+
 		TNtupleD_started = true;
 	}
 	//--check also if name is the same one--//
@@ -357,8 +355,8 @@ void Root_file_handler::write_TNtupleD(){
 	if (MyTNtuple) {
 		MyTNtuple->Write();
 	}
-	else{
-		printf("MyTNtuple does not appear to exsits \n");
+	else if (TNtupleD_started){
+		printf("Error: TNtuple does not appear to exsits. \n");
 	}
 }
 

@@ -87,5 +87,6 @@ public:
 	inline __int64 get_Total_Events_inputfile(){return Total_Events_inputfile;}
 	inline __int64 get_current_entry_inputfile(){return current_entry_inputfile;}
 	//inline bool iswritable(){return MyTNtuple->GetTree()->Is
+	inline bool IsZombie(){ return RootFile->IsZombie();}
 };
 
