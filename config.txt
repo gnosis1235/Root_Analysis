@@ -1,9 +1,11 @@
-parameter 1000 	8		;number of threads (0=1)
+// for Intel processors please load 
+parameter 1000 	8		;number of threads (0=1) 
 
+//readROOTfile "C:\CH4\CH4_ALS_Aug2010\CH4_Aug-2010\Analysis\CH4_293eV\CH4_293eV_analysis_presorted.root";
+//readROOTfile "C:\CH4\CH4_ALS_Aug2010\CH4_Aug-2010\Analysis\CH4_293eV\CH4_293eV_analysis_presorted.root";
 
+readROOTfile "C:\CH4\CH4_ALS_Aug2010\CH4_Aug-2010\Analysis\CH4_293eV\CH4_293eV_analysis_presorted_MFPADs.root";
 
-//readROOTfile "C:\CH4\CH4_ALS_Aug2010\CH4_Aug-2010\Analysis\CH4_293eV\CH4_293eV_analysis_presorted_MFPADs.root";
-readROOTfile "C:\CH4\CH4_ALS_Aug2010\CH4_Aug-2010\Analysis\CH4_293eV\CH4_293eV_analysis_presorted.root";
 /*
 readROOTfile "C:\CH4\CH4_ALS_Aug2010\CH4_Aug-2010\Analysis\CH4_293eV\CH4_293eV_analysis_preot";
 readROOTfile "C:\CH4\CH4_ALS_Aug2010\CH4_Aug-2010\Analysis\CH4_293eV\CH4_293eV_analysis_presortedt";

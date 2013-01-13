@@ -31,6 +31,7 @@
 #include <sstream> //for string_to_double
 
 using namespace std;
+bool stop_reading_input_files = false;
 
 void analysis(Root_file_handler * input_root_file, Root_file_handler * output_root_file, int thread_id, histo_handler * Hist, __int64 num_events);
 //kbhit get keyboard input
@@ -157,12 +158,13 @@ bool FileExists(const char * strFilename) {
 	printf("\n0%%           25%%          50%%          75%%        100%%\n");
 	printf("|------------|------------|------------|-----------|\n");
 	COORD start_COORD= getXY();
-	printf("\n\n\n\n\n");
+	printf("\n\n\n\n\n\n");
 	__int64 total_events = input_root_file->get_Total_Events_inputfile();
 	__int64 prev_position=0;
 	__int64 current_position=0;
 	double rate=0;
-	
+	double sum_rate = 0.;
+	int count = 0;
 	string p_bar;
 
 	double percentage_complete = 0;
@@ -178,26 +180,38 @@ bool FileExists(const char * strFilename) {
 
 		current_position =input_root_file->get_current_entry_inputfile();
 		rate = ((double)(current_position - prev_position))/0.75;
+		sum_rate += rate;
+		count++;
 
-		gotoXY(start_COORD.X, start_COORD.Y-5);
+		gotoXY(start_COORD.X, start_COORD.Y-6);
 		percentage_complete = (double)current_position / (double)total_events ;
 		num_star = (int)(51. * percentage_complete);
 		p_bar = "*";
 		for(int i=0; i < num_star; ++i){
 			p_bar += "*";
 		}
-		printf("%s \nrate=%G /s							\n", p_bar.c_str(),rate);
-		printf("percentage_complete = %f                \n",percentage_complete);
-		printf("current_position = %I64i                \n",current_position);
-		printf("total_events	 = %I64i                \n",total_events);
+		printf("%s \nrate = %G /s							\n", p_bar.c_str(), rate);
+		printf("average rate = 	%G /s			            \n", sum_rate/((double)count));
+		printf("percentage complete = %2.0f %%              \n", percentage_complete * 100.);
+		printf("Current event in file: %I64i                \n", current_position);
+		printf("Total events in file:  %I64i                \n", total_events);
 		
 		
+
 
 		c = my_kbhit();
 		if (c) {
 			while (my_kbhit());
-			if(c=='q') {printf("\nq was pressed -> skipping all file. \n"); input_root_file->stop_reading = true;}
-			if(c=='Q') {printf("\nQ was pressed -> skipping all files.\n"); input_root_file->stop_reading = true;}
+			if(c=='q') {
+				printf("\nq was pressed -> skipping this file. \n"); 
+				input_root_file->stop_reading = true;
+			}
+			if(c=='Q') {
+				printf("\nQ was pressed -> skipping all files.\n"); 
+				input_root_file->stop_reading = true;
+				stop_reading_input_files = true;
+			
+			}
 		}
 
 	}
@@ -209,15 +223,32 @@ bool FileExists(const char * strFilename) {
 
 int main(__int32 argc, char* argv[], char* envp[])
 {
-	#ifdef _DEBUG
-		Red(true);
-		printf("\n***********************\n    SLOW DEBUG VERSION !\n***********************\n");
-		Red(false);
-	#endif
+#ifdef _DEBUG
+	Red(true);
+	printf("\n***********************\n    SLOW DEBUG VERSION !\n***********************\n");
+	Red(false);
+#endif
+	string logol1 =	" __              __   ";
+	string logol2 = "|__)   /\\  |\\/| |__)  ";
+	string logol3 = "|  \\  /--\\ |  | |    ";
+	//cout << logol1 << endl;
+	//cout << logol2 << endl;
+	//cout << logol3 << endl;  
+	
 	Green(true);
-	printf("\nCRAP (Coltrims Root Analysis Program).\n");
+	printf(" *******       **     ****     **** ******* \n /**////**     ****   /**/**   **/**/**////** \n /**   /**    **//**  /**//** ** /**/**   /** \n /*******    **  //** /** //***  /**/******* \n /**///**   **********/**  //*   /**/**////  \n /**  //** /**//////**/**   /    /**/**      \n /**   //**/**     /**/**        /**/**       \n //     // //      // //         // //       ");
+	cout << endl;
+
+	//printf("\nCRAP (Coltrims Root Analysis Program).\n");
+	printf("\n   (Root Analysis Multi-threaded Program)\n");
+	//printf("\nFACER (Frankfurt Analysis Coltrims Events in Root).\n");
 	White(false);	
-	printf("Verison 0.5\n");
+	printf("Verison 0.75\n");
+	printf("By Joshua Williams");
+	printf(", Achim Czasch");
+	printf(", Till Jahnke");
+	printf(", Markus Schoeffler");
+	printf(", and ROOT\n");
 
 	Red(true);
 	printf("Don't panic! Everything will be fine.\n");
@@ -252,7 +283,7 @@ int main(__int32 argc, char* argv[], char* envp[])
 	//roughly find how many events per thread
 	__int64 num_events_per_thread;
 	__int64 extras;
-	Root_file_handler * input_root_file ;
+	//Root_file_handler * input_root_file ;
 	std::vector<std::thread> threads;
 
 	//start output file handlers
@@ -263,10 +294,21 @@ int main(__int32 argc, char* argv[], char* envp[])
 		return 0;
 	}
 
-	double temp_test = config_file->parameter[1001];
-	cout << "temp_test " << temp_test << endl;
+
 	//set the number of theads
 	int number_of_threads=(int) config_file->parameter[1000];
+	int numCPU;
+	if(number_of_threads <= 0){
+#ifdef LINUX
+	numCPU = sysconf( _SC_NPROCESSORS_ONLN );
+#else
+	SYSTEM_INFO sysinfo;
+	GetSystemInfo( &sysinfo );
+	numCPU = sysinfo.dwNumberOfProcessors;
+#endif
+	 number_of_threads=numCPU;
+	}
+	 cout << "Using "<< number_of_threads<< " threads for analysis." << endl;
 
 	//Start the histogram_handlers (one for each thread)
 	std::vector<histo_handler*> Histogram_Handler_vector;
@@ -276,7 +318,8 @@ int main(__int32 argc, char* argv[], char* envp[])
 		Histogram_Handler_vector.push_back(temp);
 	}
 
-	//loop over all of the input files
+	vector<Root_file_handler*> input_root_file_vector;
+	Root_file_handler * temp_root_file;
 	for(int i=0; i < (int)config_file->inputfilename.size(); ++i){
 	
 		if( !FileExists( config_file->inputfilename[i].c_str() ) ){
@@ -284,42 +327,54 @@ int main(__int32 argc, char* argv[], char* envp[])
 			continue; //skip the rest of the loop and return to the begin of the loop 
 		}
 
-
 		//start input file handlers
-		input_root_file = new Root_file_handler(config_file->inputfilename[i], "read");
-		if (input_root_file->IsZombie() ){
+		temp_root_file = new Root_file_handler(config_file->inputfilename[i], "read");
+		input_root_file_vector.push_back(temp_root_file);
+		if (input_root_file_vector[i]->IsZombie() ){
 			cout << "Error opening the input root files"<< endl;
 			return 0;
 		}
+	}
 
+	//loop over all of the input files
+	for(int j=0; j < (int)config_file->inputfilename.size(); ++j){
+		if(!stop_reading_input_files){
+			
+			//roughly find how many events per thread
+			num_events_per_thread = input_root_file_vector[j]->get_Total_Events_inputfile()/((__int64)number_of_threads) ; 
+			//find the left overs
+			extras = input_root_file_vector[j]->get_Total_Events_inputfile() - (num_events_per_thread * number_of_threads);
+	
+	
+			//lanuch threads
+			//start thread 0 (this one has the extra event)
+			threads.push_back(std::thread(analysis, input_root_file_vector[j], output_root_file, 0, Histogram_Handler_vector[0], num_events_per_thread + extras));
+			//start the rest of the threads 
+			for(int i = 1; i < number_of_threads; ++i){
+				threads.push_back(std::thread(analysis, input_root_file_vector[j], output_root_file, i, Histogram_Handler_vector[i], num_events_per_thread));
+			}
+			std::thread so_called_gui(GUI, input_root_file_vector[j]);
+	
+	
+			for(auto& thread : threads){
+				thread.join();
+			}
+	
+			so_called_gui.join();
+			// kill old threads
+			for(auto& thread : threads){
+				thread.~thread();
+			}
+			so_called_gui.~thread();
+			//remove the analysis threads from the threads vector
+			threads.erase(threads.begin(), threads.end());
 
+			//input_root_file_vector[j]->tree_reset();	
+			input_root_file_vector[j]->close_file();
+			//input_root_file_vector[j]->~Root_file_handler();
 
-	
-		//roughly find how many events per thread
-		num_events_per_thread = input_root_file->get_Total_Events_inputfile()/((__int64)number_of_threads) ; 
-		//find the left overs
-		extras = input_root_file->get_Total_Events_inputfile() - (num_events_per_thread * number_of_threads);
-	
-	
-		//lanuch threads
-		//start thread 0 (this one has the extra event)
-		threads.push_back(std::thread(analysis, input_root_file, output_root_file, 0, Histogram_Handler_vector[0], num_events_per_thread + extras));
-		//start the rest of the threads 
-		for(int i = 1; i < number_of_threads; ++i){
-			threads.push_back(std::thread(analysis, input_root_file, output_root_file, i, Histogram_Handler_vector[i], num_events_per_thread));
+			cout<< endl ;
 		}
-		std::thread so_called_gui(GUI, input_root_file);
-	
-	
-		for(auto& thread : threads){
-			thread.join();
-		}
-	
-		so_called_gui.join();
-	
-	
-		input_root_file->close_file();
-
 	}
 
 	cout<<endl;
@@ -333,20 +388,17 @@ int main(__int32 argc, char* argv[], char* envp[])
 				Histogram_Handler_vector[i]->h1i_map_iterator != Histogram_Handler_vector[i]->h1i_map.end();
 				++Histogram_Handler_vector[i]->h1i_map_iterator	) {
 
-			//Histogram_Handler1->h1i_map[ Histogram_Handler2->h1i_map_iterator->first ]->print_bin_contents();
 			Histogram_Handler_vector[0]->combine_hist(Histogram_Handler_vector[i]->h1i_map_iterator->second );
-			//Histogram_Handler1->h1i_map[ Histogram_Handler2->h1i_map_iterator->first ]->print_bin_contents();
 		}
 		//the 2d histograms
 		for (	Histogram_Handler_vector[i]->h2i_map_iterator =  Histogram_Handler_vector[i]->h2i_map.begin(); 
 				Histogram_Handler_vector[i]->h2i_map_iterator != Histogram_Handler_vector[i]->h2i_map.end();
 				++Histogram_Handler_vector[i]->h2i_map_iterator	) {
 
-			//Histogram_Handler1->h2i_map[ Histogram_Handler2->h2i_map_iterator->first ]->print_bin_contents();
 			Histogram_Handler_vector[0]->combine_hist(Histogram_Handler_vector[i]->h2i_map_iterator->second );
-			//Histogram_Handler1->h2i_map[ Histogram_Handler2->h2i_map_iterator->first ]->print_bin_contents();
 		}
 	}
+
 
 
 	//write 1D histograms to the root file

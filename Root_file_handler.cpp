@@ -45,7 +45,14 @@ Root_file_handler::Root_file_handler(void)
 	inputfileRootTree = 0;
 	current_entry_inputfile =0;
 	Total_Events_inputfile =0;
+	MyTNtuple = 0;
+	RootFile =0;
 	printf("Error: No file name.\n");
+	TNtupleD_started=false;
+	reading = false;
+	writing = false;
+	stop_reading = false;
+
 	return;
 	
 }
@@ -63,6 +70,7 @@ Root_file_handler::Root_file_handler(std::string filename, std::string Option_re
 	reading = false;
 	writing = false;
 	stop_reading = false;
+
 
 	//---------------------------------------------------------
 	// Don't know why these are need, but they are required to get the Ttree without errors.  I think something is wrong with the project settings.  
@@ -197,6 +205,21 @@ Root_file_handler::Root_file_handler(std::string filename, std::string Option_re
 Root_file_handler::~Root_file_handler(void)
 {
 	std::lock_guard<std::mutex> guard(mutex); //auto lock thread
+	inputfileRootTree->Delete(); //delete tree form memory
+	inputfileRootTree->~TTree();
+	MyTNtuple->~TNtupleD();
+
+	//Histograms_dir->~TDirectory();
+	//Data_dir->~TDirectory();
+
+	//if (RootFile->IsOpen() ) RootFile->Close();
+	//RootFile->~TFile();
+	//delete single_event;
+	//delete MyTNtuple;
+	//delete Histograms_dir;
+	//delete Data_dir;
+	//delete inputfileRootTree;
+	//delete RootFile;
 }
 
 
