@@ -151,7 +151,7 @@ bool FileExists(const char * strFilename) {
 	printf("\n0%%           25%%          50%%          75%%        100%%\n");
 	printf("|------------|------------|------------|-----------|\n");
 	COORD start_COORD= getXY();
-	printf("\n\n\n\n\n\n");
+	//printf("\n\n\n\n\n\n");
 	__int64 total_events = input_root_file->get_Total_Events_inputfile();
 	__int64 prev_position=0;
 	__int64 current_position=0;
@@ -176,7 +176,7 @@ bool FileExists(const char * strFilename) {
 		sum_rate += rate;
 		count++;
 
-		gotoXY(start_COORD.X, start_COORD.Y-6);
+		gotoXY(start_COORD.X, start_COORD.Y);
 		percentage_complete = (double)current_position / (double)total_events ;
 		num_star = (int)(51. * percentage_complete);
 		p_bar = "*";
@@ -306,23 +306,38 @@ int main(__int32 argc, char* argv[], char* envp[])
 		Histogram_Handler_vector.push_back(temp);
 	}
 
+
+
 	vector<Root_file_handler*> input_root_file_vector;
 	Root_file_handler * temp_root_file;
-	for(int i=0; i < (int)config_file->inputfilename.size(); ++i){
-	
-		if( !FileExists( config_file->inputfilename[i].c_str() ) ){
-			cout << "File does not exist. Skipping file." << endl;
-			continue; //skip the rest of the loop and return to the begin of the loop 
+	for(vector<string>::iterator it=config_file->inputfilename.begin(); it != config_file->inputfilename.end(); ++it){
+		if( !FileExists( it->c_str() ) ){
+			cout << "File: " <<  *it << " does not exist. Skipping file." << endl;
+			config_file->inputfilename.erase(it);		// erase the none existant filename from the vector
+			--it;		//now move the vector back by one, so that you don't skip a filename
 		}
+	}
+	
+	//start input file handlers
+	int input_file_counter = 0;
+	for(vector<string>::iterator it=config_file->inputfilename.begin(); it != config_file->inputfilename.end(); ++it){	
 
-		//start input file handlers
-		temp_root_file = new Root_file_handler(config_file->inputfilename[i], "read");
+		temp_root_file = new Root_file_handler(*it, "read");
 		input_root_file_vector.push_back(temp_root_file);
-		if (input_root_file_vector[i]->IsZombie() ){
+		if (input_root_file_vector[input_file_counter]->IsZombie() ){
 			cout << "Error opening the input root files"<< endl;
 			return 0;
 		}
+		input_file_counter++;
 	}
+	
+	if ((int)config_file->inputfilename.size() > 1 ){
+		cout << "Multifile mode. The following files will be processed." << endl;
+		for(vector<string>::iterator it=config_file->inputfilename.begin(); it != config_file->inputfilename.end(); ++it){
+			cout << "File: " <<  *it << endl;
+		}
+	}
+
 
 	//loop over all of the input files
 	for(int j=0; j < (int)config_file->inputfilename.size(); ++j){
