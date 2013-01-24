@@ -77,6 +77,7 @@ public:
 	bool stop_reading;
 
     event_data * get_next_event();
+	void get_next_event(event_data * event);
 	void NTupleD(const char *name, const char * title, const char *varlist, __int32 buffersize, double *data, const char *  dir = "Data");
 	void EventsWrittenCounter();
 	void write_TNtupleD();

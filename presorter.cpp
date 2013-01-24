@@ -94,31 +94,32 @@ void presorter_class::init_electron_tof(double etof_center, double etof_width)
 
 bool presorter_class::electron_tof(event_data * event, histo_handler * H)
 {	// begin wiggle (only electron ist stored)
-	Number_Of_Electrons = 0;
-	Number_Of_Recoils = 0;
-	bool found = false;
+	//Number_Of_Electrons = 0;
+	//Number_Of_Recoils = 0;
+	//bool found = false;
 
-	
+	//
 
-	for (int j=0;j<(event->ehit);j++)
-		{	// begin for: electrons
-			H->fill1("electron tof (no prs)",fmod((event->emcp[j] - event->bunchmarker + BMspacing*1000),BMspacing),"Electron TOF",int(6*BMspacing),-1.5*BMspacing,1.5*BMspacing,"TOF [ns]",dir);
-			if ( (fabs( (fmod((event->emcp[j] - event->bunchmarker + BMspacing*1000),BMspacing)) - etof_center) < etof_width ) ) // good electron
-			{	// begin if: correct TOF found and electron
-				found = true;
-				Elec[Number_Of_Electrons++] = j;
-				H->fill1("electron tof",fmod((event->emcp[j] - event->bunchmarker + BMspacing*1000),BMspacing),"Electron TOF",int(6*BMspacing),-1.5*BMspacing,1.5*BMspacing,"TOF [ns]",dir);
-			}	// end if: correct TOF found and electron
-	}	// end for: electrons
+	//for (int j=0;j<(event->ehit);j++)
+	//	{	// begin for: electrons
+	//		H->fill1("electron tof (no prs)",fmod((event->emcp[j] - event->bunchmarker + BMspacing*1000),BMspacing),"Electron TOF",int(6*BMspacing),-1.5*BMspacing,1.5*BMspacing,"TOF [ns]",dir);
+	//		if ( (fabs( (fmod((event->emcp[j] - event->bunchmarker + BMspacing*1000),BMspacing)) - etof_center) < etof_width ) ) // good electron
+	//		{	// begin if: correct TOF found and electron
+	//			found = true;
+	//			Elec[Number_Of_Electrons++] = j;
+	//			H->fill1("electron tof",fmod((event->emcp[j] - event->bunchmarker + BMspacing*1000),BMspacing),"Electron TOF",int(6*BMspacing),-1.5*BMspacing,1.5*BMspacing,"TOF [ns]",dir);
+	//		}	// end if: correct TOF found and electron
+	//}	// end for: electrons
 
 
-	if(event->rhit >0)
-	{
-		Number_Of_Recoils = 1;
-		Rec[0]=0;
-	}
+	//if(event->rhit >0)
+	//{
+	//	Number_Of_Recoils = 1;
+	//	Rec[0]=0;
+	//}
 
-	return found;
+	//return found;
+	return true;
 }	// end wiggle (only electron is stored)
 
 

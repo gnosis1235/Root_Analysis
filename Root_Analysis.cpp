@@ -385,40 +385,64 @@ int main(__int32 argc, char* argv[], char* envp[])
 	// iterate over the Histogram_Handler_vector
 	// store the results in Histogram_Handler_vector[0]
 	printf("Combining histgrams from each thread ...\n");
+	//for(int i=0; i<number_of_threads;++i){
+	//	//the 1d histograms
+	//	for (	Histogram_Handler_vector[i]->h1i_map_iterator =  Histogram_Handler_vector[i]->h1i_map.begin(); 
+	//			Histogram_Handler_vector[i]->h1i_map_iterator != Histogram_Handler_vector[i]->h1i_map.end();
+	//			++Histogram_Handler_vector[i]->h1i_map_iterator	) {
+
+	//		Histogram_Handler_vector[0]->combine_hist(Histogram_Handler_vector[i]->h1i_map_iterator->second );
+	//	}
+	//	//the 2d histograms
+	//	for (	Histogram_Handler_vector[i]->h2i_map_iterator =  Histogram_Handler_vector[i]->h2i_map.begin(); 
+	//			Histogram_Handler_vector[i]->h2i_map_iterator != Histogram_Handler_vector[i]->h2i_map.end();
+	//			++Histogram_Handler_vector[i]->h2i_map_iterator	) {
+
+	//		Histogram_Handler_vector[0]->combine_hist(Histogram_Handler_vector[i]->h2i_map_iterator->second );
+	//	}
+	//}
+
 	for(int i=0; i<number_of_threads;++i){
 		//the 1d histograms
-		for (	Histogram_Handler_vector[i]->h1i_map_iterator =  Histogram_Handler_vector[i]->h1i_map.begin(); 
-				Histogram_Handler_vector[i]->h1i_map_iterator != Histogram_Handler_vector[i]->h1i_map.end();
-				++Histogram_Handler_vector[i]->h1i_map_iterator	) {
-
-			Histogram_Handler_vector[0]->combine_hist(Histogram_Handler_vector[i]->h1i_map_iterator->second );
+		for ( int j=0;j < (int)(Histogram_Handler_vector[i]->h1i_vector.size()); j++ ) {
+			Histogram_Handler_vector[0]->combine_hist( Histogram_Handler_vector[i]->h1i_vector[j], j);
 		}
 		//the 2d histograms
-		for (	Histogram_Handler_vector[i]->h2i_map_iterator =  Histogram_Handler_vector[i]->h2i_map.begin(); 
-				Histogram_Handler_vector[i]->h2i_map_iterator != Histogram_Handler_vector[i]->h2i_map.end();
-				++Histogram_Handler_vector[i]->h2i_map_iterator	) {
+		for ( int j=0;j < (int)(Histogram_Handler_vector[i]->h2i_vector.size()); j++ ) {
 
-			Histogram_Handler_vector[0]->combine_hist(Histogram_Handler_vector[i]->h2i_map_iterator->second );
+			Histogram_Handler_vector[0]->combine_hist(Histogram_Handler_vector[i]->h2i_vector[j], j);
 		}
 	}
 
 
+	////write 1D histograms to the root file
+	//for (	Histogram_Handler_vector[0]->h1i_map_iterator =  Histogram_Handler_vector[0]->h1i_map.begin(); 
+	//		Histogram_Handler_vector[0]->h1i_map_iterator != Histogram_Handler_vector[0]->h1i_map.end();
+	//		++Histogram_Handler_vector[0]->h1i_map_iterator	) {
 
+	//			output_root_file->add_hist( Histogram_Handler_vector[0]->h1i_map_iterator->second );
+	//}
+
+	////write 2D histograms to the root file
+	//for (	Histogram_Handler_vector[0]->h2i_map_iterator =  Histogram_Handler_vector[0]->h2i_map.begin(); 
+	//		Histogram_Handler_vector[0]->h2i_map_iterator != Histogram_Handler_vector[0]->h2i_map.end();
+	//		++Histogram_Handler_vector[0]->h2i_map_iterator	) {
+
+	//			output_root_file->add_hist( Histogram_Handler_vector[0]->h2i_map_iterator->second );
+	//}
+	
 	//write 1D histograms to the root file
-	for (	Histogram_Handler_vector[0]->h1i_map_iterator =  Histogram_Handler_vector[0]->h1i_map.begin(); 
-			Histogram_Handler_vector[0]->h1i_map_iterator != Histogram_Handler_vector[0]->h1i_map.end();
-			++Histogram_Handler_vector[0]->h1i_map_iterator	) {
-
-				output_root_file->add_hist( Histogram_Handler_vector[0]->h1i_map_iterator->second );
+	for ( int j=0;j < (int)(Histogram_Handler_vector[0]->h1i_vector.size()); j++ ) {
+		if(Histogram_Handler_vector[0]->h1i_vector[j] != 0)
+			output_root_file->add_hist( Histogram_Handler_vector[0]->h1i_vector[j] );
 	}
 
 	//write 2D histograms to the root file
-	for (	Histogram_Handler_vector[0]->h2i_map_iterator =  Histogram_Handler_vector[0]->h2i_map.begin(); 
-			Histogram_Handler_vector[0]->h2i_map_iterator != Histogram_Handler_vector[0]->h2i_map.end();
-			++Histogram_Handler_vector[0]->h2i_map_iterator	) {
-
-				output_root_file->add_hist( Histogram_Handler_vector[0]->h2i_map_iterator->second );
+	for (	int j=0;j < (int)(Histogram_Handler_vector[0]->h2i_vector.size()); j++ ){
+		if(Histogram_Handler_vector[0]->h2i_vector[j] != 0)
+			output_root_file->add_hist( Histogram_Handler_vector[0]->h2i_vector[j] );
 	}
+
 
 
 

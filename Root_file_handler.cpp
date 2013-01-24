@@ -308,32 +308,33 @@ event_data * Root_file_handler::get_next_event(){
 		current_entry_inputfile++;
 
 		event_data * event = new event_data();
-		//copy data to a disposible event_data (will be deleted when analysis is finsihed)
+		
 		//should change this a memcpy
-		(*event).bunchmarker = (*single_event).bunchmarker;
-		(*event).rhit		= (*single_event).rhit;
-		(*event).ehit		= (*single_event).ehit;
-		(*event).phit		= (*single_event).phit;
-		(*event).reaction	= (*single_event).reaction ;
-	
-		for(int i=0;i<32; ++i)	(*event).rflag[i]		= (*single_event).rflag[i];
-		for(int i=0;i<32; ++i)	(*event).rx[i]			= (*single_event).rx[i]	;
-		for(int i=0;i<32; ++i)	(*event).ry[i]			= (*single_event).ry[i]	;
-		for(int i=0;i<32; ++i)	(*event).rmcp[i]		= (*single_event).rmcp[i];
-		for(int i=0;i<32; ++i)	(*event).rtof[i]		= (*single_event).rtof[i];
-								  						    
-		for(int i=0;i<32; ++i)	(*event).eflag[i]		= (*single_event).eflag[i];
-		for(int i=0;i<32; ++i)	(*event).ex[i]			= (*single_event).ex[i]	;
-		for(int i=0;i<32; ++i)	(*event).ey[i]			= (*single_event).ey[i]	;
-		for(int i=0;i<32; ++i)	(*event).emcp[i]		= (*single_event).emcp[i];
-		for(int i=0;i<32; ++i)	(*event).etof[i]		= (*single_event).etof[i];
-								  						    
-		for(int i=0;i<32; ++i)	(*event).pflag[i]		= (*single_event).pflag[i];
-		for(int i=0;i<32; ++i)	(*event).px[i]			= (*single_event).px[i]	;
-		for(int i=0;i<32; ++i)	(*event).py[i]			= (*single_event).py[i]	;
-		for(int i=0;i<32; ++i)	(*event).pmcp[i]		= (*single_event).pmcp[i];
-		for(int i=0;i<32; ++i)	(*event).ptof[i]		= (*single_event).ptof[i];
-	
+		//(*event).bunchmarker = (*single_event).bunchmarker;
+		//(*event).rhit		= (*single_event).rhit;
+		//(*event).ehit		= (*single_event).ehit;
+		//(*event).phit		= (*single_event).phit;
+		//(*event).reaction	= (*single_event).reaction ;
+		//for(int i=0;i<32; ++i)	{
+		//	(*event).rflag[i]		= (*single_event).rflag[i];
+		//	(*event).rx[i]			= (*single_event).rx[i]	;
+		//	(*event).ry[i]			= (*single_event).ry[i]	;
+		//	(*event).rmcp[i]		= (*single_event).rmcp[i];
+		//	(*event).rtof[i]		= (*single_event).rtof[i];
+		//  						    
+		//	(*event).eflag[i]		= (*single_event).eflag[i];
+		//	(*event).ex[i]			= (*single_event).ex[i]	;
+		//	(*event).ey[i]			= (*single_event).ey[i]	;
+		//	(*event).emcp[i]		= (*single_event).emcp[i];
+		//	(*event).etof[i]		= (*single_event).etof[i];
+		//  						    
+		//	(*event).pflag[i]		= (*single_event).pflag[i];
+		//	(*event).px[i]			= (*single_event).px[i]	;
+		//	(*event).py[i]			= (*single_event).py[i]	;
+		//	(*event).pmcp[i]		= (*single_event).pmcp[i];
+		//	(*event).ptof[i]		= (*single_event).ptof[i];
+		//}
+		std::copy(single_event, single_event+1, event);//copy data to a disposible event_data struct (will be deleted when analysis has finished the loop)
 		return event;
 	}else{
 		stop_reading=true;
@@ -343,7 +344,25 @@ event_data * Root_file_handler::get_next_event(){
 
 
 
+void Root_file_handler::get_next_event(event_data * event){
+	std::lock_guard<std::mutex> guard(mutex); //auto lock thread
+	
+	if(!reading) { //don't try to read the file if is for write
+		printf("Error:File %s does not appear to be an input file. You cannot call get_next_event on and output file.\n", rootfilename.c_str());
+		return;
+	}
+	if(current_entry_inputfile <= Total_Events_inputfile){
+		//read new row from the NTuple
+		inputfileRootTree->GetEntry(current_entry_inputfile);
+		current_entry_inputfile++;
 
+		std::copy(single_event, single_event+1, event);//copy data to a event_data struct that is owned by the analysis thread 
+		return;
+	}else{
+		stop_reading=true;
+		return;
+	}
+}
 
 
 
@@ -410,7 +429,9 @@ void Root_file_handler::add_hist(H1i * hist){
 	Histograms_dir->cd();
 
 	// create root hist
-	TH1I * root_hist =new TH1I(hist->get_name().c_str(), hist->get_title().c_str(), hist->get_X_n_bins(), hist->get_X_min(), hist->get_X_max() );
+//	TH1I * root_hist =new TH1I(hist->get_name().c_str(), hist->get_title().c_str(), hist->get_X_n_bins(), hist->get_X_min(), hist->get_X_max() );
+	TH1I * root_hist =new TH1I(hist->get_name(), hist->get_title(), hist->get_X_n_bins(), hist->get_X_min(), hist->get_X_max() );
+
 	// copy contents
 	root_hist->SetBinContent( 0 , hist->get_X_underflow() );
 	for(int i=0; i < hist->get_X_n_bins(); ++i){
@@ -418,11 +439,13 @@ void Root_file_handler::add_hist(H1i * hist){
 	}
 	root_hist->SetBinContent( hist->get_X_n_bins()+1 , hist->get_X_overflow() );
 	//set axis title
-	root_hist->SetXTitle( hist->get_X_title().c_str() );
+	//root_hist->SetXTitle( hist->get_X_title().c_str() );
+	root_hist->SetXTitle( hist->get_X_title() );
 	
 
 	//write to root file
-	root_hist->Write(hist->get_name().c_str() );
+	//root_hist->Write(hist->get_name().c_str() );
+	root_hist->Write(hist->get_name() );
 }
 
 
@@ -433,7 +456,7 @@ void Root_file_handler::add_hist(H2i * hist){
 	Histograms_dir->cd();
 
 	// create root hist
-	TH2I * root_hist =new TH2I(hist->get_name().c_str(), hist->get_title().c_str(), hist->get_X_n_bins(), hist->get_X_min(), hist->get_X_max(), hist->get_Y_n_bins(), hist->get_Y_min(), hist->get_Y_max() );
+	TH2I * root_hist =new TH2I(hist->get_name(), hist->get_title(), hist->get_X_n_bins(), hist->get_X_min(), hist->get_X_max(), hist->get_Y_n_bins(), hist->get_Y_min(), hist->get_Y_max() );
 	// copy contents
 	root_hist->SetBinContent( 0, 1, hist->get_X_underflow() );
 	root_hist->SetBinContent( 1, 0, hist->get_Y_underflow() );
@@ -445,12 +468,12 @@ void Root_file_handler::add_hist(H2i * hist){
 	root_hist->SetBinContent( hist->get_X_n_bins()+1, 1 , hist->get_X_overflow() );
 	root_hist->SetBinContent( 1, hist->get_Y_n_bins()+1 , hist->get_Y_overflow() );
 	//set axis title
-	root_hist->SetXTitle( hist->get_X_title().c_str() );
-	root_hist->SetYTitle( hist->get_Y_title().c_str() );
+	root_hist->SetXTitle( hist->get_X_title() );
+	root_hist->SetYTitle( hist->get_Y_title() );
 
 	root_hist->SetOption("colz");
 	//write to root file
-	root_hist->Write(hist->get_name().c_str() );
+	root_hist->Write(hist->get_name() );
 }
 
 
