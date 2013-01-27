@@ -109,6 +109,8 @@
       <AdditionalIncludeDirectories>$(rootsys)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4996;4800</DisableSpecificWarnings>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -158,6 +160,9 @@
     <ClInclude Include="..\presorter.h" />
     <ClInclude Include="..\Root_file_handler.h" />
     <ClInclude Include="..\Simple_Hist.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\config.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

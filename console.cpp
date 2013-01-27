@@ -1,7 +1,17 @@
 #include "console.h"
 
+
 #ifndef LINUX
 	using namespace std;
+
+	void cls()
+	{
+		gotoXY(0,0);
+		for(int i=0 ; i<25 ; i++)
+			printf("                                                                                                             ");
+		
+		gotoXY(0,0);
+	}
 
 	void gotoXY(int x, int y)
 	{
@@ -33,12 +43,25 @@
 		else
 			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),FOREGROUND_RED);
 	}
+	void Blue(bool highlite) {
+		if (highlite) 
+			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),FOREGROUND_INTENSITY|FOREGROUND_BLUE);
+		else
+			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),FOREGROUND_BLUE);
+	}
 	void White(bool highlite) {
 		if (highlite) 
 			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),15);
 		else
 			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),7);
 	}
+
+	__int32 keyhit()
+	{
+		if (!_kbhit()) return 0;
+		return _getch();
+	}
+
 #endif
 
 
@@ -58,4 +81,21 @@
 
 	void White(bool highlite = false) {
 	}
+
+	__int32 keyhit(void)
+	{
+		struct termios term, oterm;
+		__int32 fd = 0;
+		__int32 c = 0;
+		tcgetattr(fd, &oterm);
+		memcpy(&term, &oterm, sizeof(term));
+		term.c_lflag = term.c_lflag & (!ICANON);
+		term.c_cc[VMIN] = 0;
+		term.c_cc[VTIME] = 1;
+		tcsetattr(fd, TCSANOW, &term);
+		c = getchar();
+		tcsetattr(fd, TCSANOW, &oterm);
+		return ((c != -1) ? c : 0);
+	}
+
 #endif

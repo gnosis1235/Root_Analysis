@@ -176,7 +176,9 @@ bool FileExists(const char * strFilename) {
 		sum_rate += rate;
 		count++;
 
-		gotoXY(start_COORD.X, start_COORD.Y);
+	//	gotoXY(start_COORD.X, start_COORD.Y);
+	//	gotoXY(start_COORD.X, 0);
+		
 		percentage_complete = (double)current_position / (double)total_events ;
 		num_star = (int)(51. * percentage_complete);
 		p_bar = "*";
@@ -198,6 +200,7 @@ bool FileExists(const char * strFilename) {
 			if(c=='q') {
 				printf("\nq was pressed -> skipping this file. \n"); 
 				input_root_file->stop_reading = true;
+			//	printf("average rate = 	%G /s			            \n", sum_rate/((double)count));
 			}
 			if(c=='Q') {
 				printf("\nQ was pressed -> skipping all files.\n"); 
@@ -296,9 +299,14 @@ int main(__int32 argc, char* argv[], char* envp[])
 #endif
 	 number_of_threads=numCPU;
 	}
-	 cout << "Using "<< number_of_threads<< " threads for analysis." << endl;
-
-	//Start the histogram_handlers (one for each thread)
+		Blue(false);
+	 cout << "Using ";
+	 Blue(true);
+		cout << number_of_threads;
+		Blue(false);
+		cout << " threads for analysis." << endl;
+		White(false);
+	 //Start the histogram_handlers (one for each thread)
 	std::vector<histo_handler*> Histogram_Handler_vector;
 	histo_handler * temp;
 	for(int i = 0; i < number_of_threads; ++i){
@@ -384,6 +392,7 @@ int main(__int32 argc, char* argv[], char* envp[])
 	//combine the historams form each thread
 	// iterate over the Histogram_Handler_vector
 	// store the results in Histogram_Handler_vector[0]
+	if (number_of_threads > 1){
 	printf("Combining histgrams from each thread ...\n");
 	for(int i=0; i<number_of_threads;++i){
 		//the 1d histograms
@@ -401,10 +410,21 @@ int main(__int32 argc, char* argv[], char* envp[])
 			Histogram_Handler_vector[0]->combine_hist(Histogram_Handler_vector[i]->h2i_map_iterator->second );
 		}
 	}
+	}
+	//////for(int i=0; i<number_of_threads;++i){
+	//////	//the 1d histograms
+	//////	for ( int j=0;j < (int)(Histogram_Handler_vector[i]->h1i_vector.size()); j++ ) {
+	//////		Histogram_Handler_vector[0]->combine_hist( Histogram_Handler_vector[i]->h1i_vector[j], j);
+	//////	}
+	//////	//the 2d histograms
+	//////	for ( int j=0;j < (int)(Histogram_Handler_vector[i]->h2i_vector.size()); j++ ) {
+
+	//////		Histogram_Handler_vector[0]->combine_hist(Histogram_Handler_vector[i]->h2i_vector[j], j);
+	//////	}
+	//////}
 
 
-
-	//write 1D histograms to the root file
+	////write 1D histograms to the root file
 	for (	Histogram_Handler_vector[0]->h1i_map_iterator =  Histogram_Handler_vector[0]->h1i_map.begin(); 
 			Histogram_Handler_vector[0]->h1i_map_iterator != Histogram_Handler_vector[0]->h1i_map.end();
 			++Histogram_Handler_vector[0]->h1i_map_iterator	) {
@@ -419,6 +439,19 @@ int main(__int32 argc, char* argv[], char* envp[])
 
 				output_root_file->add_hist( Histogram_Handler_vector[0]->h2i_map_iterator->second );
 	}
+	
+	////////write 1D histograms to the root file
+	//////for ( int j=0;j < (int)(Histogram_Handler_vector[0]->h1i_vector.size()); j++ ) {
+	//////	if(Histogram_Handler_vector[0]->h1i_vector[j] != 0)
+	//////		output_root_file->add_hist( Histogram_Handler_vector[0]->h1i_vector[j] );
+	//////}
+
+	////////write 2D histograms to the root file
+	//////for (	int j=0;j < (int)(Histogram_Handler_vector[0]->h2i_vector.size()); j++ ){
+	//////	if(Histogram_Handler_vector[0]->h2i_vector[j] != 0)
+	//////		output_root_file->add_hist( Histogram_Handler_vector[0]->h2i_vector[j] );
+	//////}
+
 
 
 

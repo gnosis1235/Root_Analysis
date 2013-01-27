@@ -11,20 +11,27 @@
 
 		using namespace std;
 
+		void cls();
 		void gotoXY(int x, int y);
 		COORD getXY();
 
 		void Green(bool highlite = false);
 		void Red(bool highlite = false);
+		void Blue(bool highlite = false);
 		void White(bool highlite = false);
+		
+		__int32 keyhit();
+
 	#endif
 
 	#ifdef LINUX
 		void gotoXY(int x, int y);
 		COORD getXY();
 		void Green(bool highlite = false);
+		void Blue(bool highlite = false);
 		void Red(bool highlite = false);
 		void White(bool highlite = false);
+		__int32 keyhit(void);
 	#endif
 
 #endif
